@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/views/HomeView.vue';
 import LoginView from '@/views/LoginView.vue';
+import RegisterView from '@/views/RegisterView.vue';
 import VerifyEmailView from '@/views/VerifyEmailView.vue';
 import AuthCallbackView from '@/views/AuthCallbackView.vue';
 import ResetPasswordView from '@/views/ResetPasswordView.vue';
@@ -21,6 +22,12 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginView,
+    meta: { guestOnly: true, hideNavbar: true },
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: RegisterView,
     meta: { guestOnly: true, hideNavbar: true },
   },
   {
@@ -87,32 +94,52 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    }
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' };
+    }
+    return { top: 0, behavior: 'smooth' };
+  },
 });
+
+// Initial profile load tracker
+let isInitialProfileVerified = false;
 
 // Navigation Guard
 router.beforeEach(async (to) => {
   const authStore = useAuthStore();
-  const isAuthenticated = authStore.isAuthenticated;
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    return { name: 'login' };
-  }
-
-  // If authenticated and user role is not yet loaded, fetch profile
-  if (isAuthenticated && (!authStore.user || !authStore.user.role)) {
+  // If user has token, verify fresh profile & role from /auth/profile
+  if (authStore.isAuthenticated && (!isInitialProfileVerified || !authStore.user?.role)) {
     try {
       await authStore.fetchProfile();
+      isInitialProfileVerified = true;
     } catch (e) {
-      // Ignored
+      console.warn('Navigation guard: Profile verification failed or session expired', e);
     }
   }
 
-  // Prevent regular users from accessing admin-only dashboard
+  // 1. Unauthenticated users trying to access any protected route -> redirect to login
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return { name: 'login', query: { redirect: to.fullPath } };
+  }
+
+  // 2. Admin Route Guard: Non-admin users attempting to access admin routes (e.g. /dashboard)
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
     return { name: 'home' };
   }
 
-  if (to.meta.guestOnly && isAuthenticated) {
+  // 3. User Route Guard: If a route specifically requires regular user role
+  if (to.meta.requiresUser && !authStore.isUser) {
+    return { name: 'dashboard' };
+  }
+
+  // 4. Guest-Only Route Guard (e.g. /login, /register):
+  // Authenticated users are redirected according to their role (admin -> /dashboard, user -> /)
+  if (to.meta.guestOnly && authStore.isAuthenticated) {
     return authStore.isAdmin ? { name: 'dashboard' } : { name: 'home' };
   }
 

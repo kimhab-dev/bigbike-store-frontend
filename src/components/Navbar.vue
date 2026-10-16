@@ -2,15 +2,14 @@
   <nav class="navbar">
     <div class="brand">
       <router-link to="/" class="brand-link">
-        <i class="fa fa-motorcycle logo-icon"></i>
-        <span class="brand-name">BigBike<span class="brand-tag">STORE</span></span>
+        <img class="brand-name" src="../assets/image/logo/logo.png" alt="">
       </router-link>
     </div>
     <div class="nav-links">
       <!-- Storefront links visible only to regular visitors/users -->
       <template v-if="!authStore.isAdmin">
         <router-link to="/">
-          <i class="fa fa-home"></i>
+          <i class="bi bi-house-door"></i>
           <span>Home</span>
         </router-link>
         <a href="/#featured-fleet">
@@ -18,32 +17,29 @@
           <span>Showroom</span>
         </a>
       </template>
-      
+
       <router-link v-if="!authStore.isAuthenticated" to="/login" class="nav-auth-btn">
-        <i class="fa fa-sign-in"></i>
+        <i class="bi bi-box-arrow-in-right"></i>
         <span>Sign In</span>
       </router-link>
-      
+
       <template v-if="authStore.isAuthenticated">
         <!-- Only Admins see Dashboard link -->
         <router-link v-if="authStore.isAdmin" to="/dashboard" class="dashboard-link">
-          <i class="fa fa-tachometer"></i>
+          <i class="bi bi-speedometer2"></i>
           <span>Dashboard</span>
         </router-link>
         <!-- Regular users see My Orders -->
         <router-link v-if="!authStore.isAdmin" to="/orders" class="nav-orders-link">
-          <i class="fa fa-shopping-bag"></i>
+          <i class="bi bi-bag-check"></i>
           <span>My Orders</span>
         </router-link>
         <router-link to="/profile" class="profile-nav-link">
-          <i class="fa fa-user"></i>
+          <i class="bi bi-person-circle"></i>
           <span>Profile</span>
-          <span :class="['nav-role-badge', authStore.isAdmin ? 'badge-admin' : 'badge-user']">
-            {{ (authStore.userRole || 'user').toUpperCase() }}
-          </span>
         </router-link>
         <button @click="handleLogout" class="nav-logout-btn">
-          <i class="fa fa-sign-out"></i>
+          <i class="bi bi-box-arrow-right"></i>
           <span>Logout</span>
         </button>
       </template>
@@ -88,6 +84,7 @@ const handleLogout = () => {
   align-items: center;
   gap: 0.6rem;
   text-decoration: none;
+  width: 120px !important;
 }
 
 .logo-icon {
@@ -99,6 +96,9 @@ const handleLogout = () => {
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #f8fafc;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brand-tag {
@@ -197,6 +197,7 @@ const handleLogout = () => {
   .navbar {
     padding: 0.85rem 1.25rem;
   }
+
   .nav-links {
     gap: 1rem;
   }

@@ -13,6 +13,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => !!state.token,
+    userId: (state) => state.user?.id || null,
     userRole: (state) => (state.user?.role || USER_ROLES.USER).toLowerCase(),
     isAdmin: (state) => (state.user?.role || '').toLowerCase() === USER_ROLES.ADMIN,
     isUser: (state) => (state.user?.role || '').toLowerCase() === USER_ROLES.USER,
@@ -151,6 +152,26 @@ export const useAuthStore = defineStore('auth', {
       const response = await authService.deleteAvatar();
       await this.fetchProfile();
       return response;
+    },
+
+    async setup2FA() {
+      const response = await authService.setup2FA();
+      // Returns { result: true, data: { secret, qrCode } }
+      return response?.data || response;
+    },
+
+    async verify2FA(token) {
+      const response = await authService.verify2FA(token);
+      // After successful verify, refresh profile so twoFactorEnabled reflects true
+      await this.fetchProfile();
+      return response?.data || response;
+    },
+
+    async disable2FA(token) {
+      const response = await authService.disable2FA(token);
+      // After disabling, refresh profile
+      await this.fetchProfile();
+      return response?.data || response;
     },
 
     logout() {

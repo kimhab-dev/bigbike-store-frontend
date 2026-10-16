@@ -1,28 +1,5 @@
 <template>
   <div class="auth-card">
-    <!-- Tab Switcher -->
-    <div class="auth-tabs">
-      <button
-        class="auth-tab"
-        :class="{ active: activeTab === 'login' }"
-        @click="switchTab('login')"
-        type="button"
-      >
-        <i class="fa fa-sign-in tab-icon"></i>
-        Sign In
-      </button>
-      <button
-        class="auth-tab"
-        :class="{ active: activeTab === 'register' }"
-        @click="switchTab('register')"
-        type="button"
-      >
-        <i class="fa fa-user-plus tab-icon"></i>
-        Create Account
-      </button>
-      <div class="tab-slider" :class="{ 'slide-right': activeTab === 'register' }"></div>
-    </div>
-
     <!-- Header -->
     <div class="auth-header">
       <transition name="header-fade" mode="out-in">
@@ -178,120 +155,10 @@
 
         <p class="switch-hint">
           Don't have an account?
-          <button type="button" class="switch-link" @click="switchTab('register')">Create one free →</button>
-        </p>
-      </form>
-
-      <!-- ══════ REGISTER FORM ══════ -->
-      <form v-else key="register-form" @submit.prevent="handleRegister" class="auth-form" novalidate>
-
-        <!-- Google OAuth Button -->
-        <button type="button" class="google-oauth-btn" @click="handleGoogleLogin">
-          <i class="fa fa-google google-icon"></i>
-          <span>Sign up with Google</span>
-        </button>
-
-        <div class="auth-divider">
-          <span>or fill details manually</span>
-        </div>
-
-        <!-- Full Name -->
-        <div class="form-group">
-          <label for="reg-name">Full Name</label>
-          <div class="input-group" :class="{ 'is-error': rt.name && re.name, 'is-valid': rt.name && !re.name && rf.name }">
-            <span class="input-icon">
-              <i class="fa fa-user"></i>
-            </span>
-            <input id="reg-name" v-model="rf.name" type="text" placeholder="e.g. Sophea Kim"
-              :disabled="regLoading" autocomplete="name"
-              @blur="rTouch('name')" @input="rt.name && rValidateField('name')" />
-          </div>
-          <transition name="fade-slide">
-            <span v-if="rt.name && re.name" class="error-msg">
-              <i class="fa fa-exclamation-circle error-icon"></i>
-              {{ re.name }}
-            </span>
-          </transition>
-        </div>
-
-        <!-- Email -->
-        <div class="form-group">
-          <label for="reg-email">Email Address</label>
-          <div class="input-group" :class="{ 'is-error': rt.email && re.email, 'is-valid': rt.email && !re.email && rf.email }">
-            <span class="input-icon">
-              <i class="fa fa-envelope"></i>
-            </span>
-            <input id="reg-email" v-model="rf.email" type="email" placeholder="rider@example.com"
-              :disabled="regLoading" autocomplete="email"
-              @blur="rTouch('email')" @input="rt.email && rValidateField('email')" />
-          </div>
-          <transition name="fade-slide">
-            <span v-if="rt.email && re.email" class="error-msg">
-              <i class="fa fa-exclamation-circle error-icon"></i>
-              {{ re.email }}
-            </span>
-          </transition>
-        </div>
-
-        <!-- Password -->
-        <div class="form-group">
-          <label for="reg-password">Password</label>
-          <div class="input-group" :class="{ 'is-error': rt.password && re.password, 'is-valid': rt.password && !re.password && rf.password }">
-            <span class="input-icon">
-              <i class="fa fa-lock"></i>
-            </span>
-            <input id="reg-password" v-model="rf.password" :type="showRegPw ? 'text' : 'password'"
-              placeholder="Create a strong password" :disabled="regLoading"
-              autocomplete="new-password"
-              @blur="rTouch('password')" @input="rt.password && rValidateField('password')" />
-            <button type="button" class="visibility-btn" @click="showRegPw = !showRegPw" tabindex="-1">
-              <i :class="showRegPw ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
-            </button>
-          </div>
-          <!-- Password Strength Bar -->
-          <div v-if="rf.password" class="strength-bar-wrap">
-            <div class="strength-bar">
-              <div class="strength-fill" :class="pwStrengthClass" :style="{ width: pwStrengthPct + '%' }"></div>
-            </div>
-            <span class="strength-label" :class="pwStrengthClass">{{ pwStrengthLabel }}</span>
-          </div>
-          <transition name="fade-slide">
-            <span v-if="rt.password && re.password" class="error-msg">
-              <i class="fa fa-exclamation-circle error-icon"></i>
-              {{ re.password }}
-            </span>
-          </transition>
-        </div>
-
-        <!-- Terms Notice -->
-        <p class="terms-notice">
-          By registering you agree to our
-          <a href="#" @click.prevent>Terms of Service</a> &amp;
-          <a href="#" @click.prevent>Privacy Policy</a>.
-        </p>
-
-        <!-- Submit -->
-        <button type="submit" class="submit-btn register-btn" :disabled="regLoading">
-          <span v-if="regLoading" class="spinner-container">
-            <span class="spinner"></span><span>Creating Account...</span>
-          </span>
-          <span v-else class="btn-text-wrapper">
-            <span>Create Rider Account</span>
-            <i class="fa fa-user-plus arrow-icon"></i>
-          </span>
-        </button>
-
-        <p class="switch-hint">
-          Already have an account?
-          <button type="button" class="switch-link" @click="switchTab('login')">Sign in instead →</button>
+          <router-link to="/register" class="switch-link">Create one free →</router-link>
         </p>
       </form>
     </transition>
-
-    <!-- Footer -->
-    <div class="form-footer">
-      <p>Protected by BigBike Cloud Security <span class="shield-badge">256-bit SSL</span></p>
-    </div>
   </div>
 </template>
 
@@ -434,84 +301,6 @@ const handleLogin = async () => {
   }
 };
 
-// ── Register Form State ────────────────────────
-const regLoading = ref(false);
-const showRegPw = ref(false);
-
-const rf = reactive({ name: '', email: '', password: '' });
-
-const { errors: re, touched: rt, validate: rValidate, validateField: rValidateField, touch: rTouch } = useFormValidation(rf, {
-  name: [
-    validators.required('Full name is required'),
-    validators.minLength(2, 'Name must be at least 2 characters'),
-  ],
-  email: [
-    validators.required('Email address is required'),
-    validators.email('Please enter a valid email address'),
-  ],
-  password: [
-    validators.required('Password is required'),
-    validators.minLength(6, 'Password must be at least 6 characters'),
-  ],
-});
-
-// Password strength
-const pwStrengthScore = computed(() => {
-  const pw = rf.password;
-  if (!pw) return 0;
-  let score = 0;
-  if (pw.length >= 6) score++;
-  if (pw.length >= 10) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return score;
-});
-
-const pwStrengthPct = computed(() => Math.min(100, (pwStrengthScore.value / 5) * 100));
-
-const pwStrengthLabel = computed(() => {
-  const s = pwStrengthScore.value;
-  if (s <= 1) return 'Weak';
-  if (s <= 2) return 'Fair';
-  if (s <= 3) return 'Good';
-  if (s <= 4) return 'Strong';
-  return 'Excellent';
-});
-
-const pwStrengthClass = computed(() => {
-  const s = pwStrengthScore.value;
-  if (s <= 1) return 'weak';
-  if (s <= 2) return 'fair';
-  if (s <= 3) return 'good';
-  return 'strong';
-});
-
-const handleRegister = async () => {
-  if (!rValidate()) {
-    toast.warning('Please resolve the highlighted errors.', 'Incomplete Form');
-    return;
-  }
-  regLoading.value = true;
-  const userEmail = rf.email;
-  try {
-    // POST /auth/register { name, email, password }
-    await authStore.register({ name: rf.name, email: rf.email, password: rf.password });
-    toast.success(`Account created! Please verify your email.`, 'Registration Successful');
-    
-    // Redirect to verification pending page
-    router.push({
-      path: '/verify-email',
-      query: { email: userEmail },
-    });
-  } catch (err) {
-    const msg = err.message || 'Registration failed. Please try again.';
-    toast.error(msg, 'Registration Failed');
-    emit('error', err);
-  } finally {
-    regLoading.value = false;
-  }
-};
 </script>
 
 <style scoped>
@@ -532,7 +321,7 @@ const handleRegister = async () => {
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
   padding: 4px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.9rem;
   overflow: hidden;
 }
 
@@ -560,7 +349,7 @@ const handleRegister = async () => {
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  padding: 0.65rem 1rem;
+  padding: 0.6rem 1rem;
   background: transparent;
   border: none;
   border-radius: 10px;
@@ -568,6 +357,7 @@ const handleRegister = async () => {
   font-size: 0.875rem;
   font-weight: 600;
   color: #64748b;
+  text-decoration: none;
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -583,8 +373,7 @@ const handleRegister = async () => {
 
 /* ── Header ───────────────────────────────────── */
 .auth-header {
-  margin-bottom: 1.4rem;
-  min-height: 90px;
+  margin-bottom: 0.9rem;
 }
 
 .brand-pill {

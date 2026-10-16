@@ -7,7 +7,6 @@
 
       <!-- Top Profile Header Card -->
       <section class="profile-hero-card">
-        <div class="hero-cover-pattern"></div>
         <div class="hero-content">
           <div class="avatar-container">
             <div class="avatar-frame" :class="{ 'is-admin': authStore.isAdmin }" @click="openAvatarModal">
@@ -19,14 +18,14 @@
 
               <!-- Hover / Click Trigger Overlay -->
               <div class="avatar-edit-overlay" title="Click to view or edit avatar">
-                <i class="fa fa-camera camera-icon"></i>
+                <i class="bi bi-camera-fill camera-icon"></i>
                 <span>Edit Photo</span>
               </div>
             </div>
 
             <!-- Verified Badge on Avatar -->
             <div v-if="authStore.isVerified" class="verified-badge-icon" title="Verified Identity">
-              <i class="fa fa-check"></i>
+              <i class="bi bi-check-lg"></i>
             </div>
           </div>
 
@@ -36,7 +35,7 @@
 
               <!-- Role Master Badge -->
               <div :class="['role-master-badge', authStore.isAdmin ? 'badge-admin-master' : 'badge-user-master']">
-                <i :class="authStore.isAdmin ? 'fa fa-crown role-icon' : 'fa fa-motorcycle role-icon'"></i>
+                <i :class="authStore.isAdmin ? 'bi bi-shield-lock-fill role-icon' : 'bi bi-person-badge-fill role-icon'"></i>
                 <span>{{ (authStore.userRole || 'user').toUpperCase() }}</span>
               </div>
             </div>
@@ -44,7 +43,7 @@
             <p class="user-email-row">
               <span class="email-text">{{ authStore.userEmail }}</span>
               <button class="copy-chip-btn" @click="copyText(authStore.userEmail, 'Email copied!')" title="Copy email">
-                <i class="fa fa-clipboard chip-icon"></i>
+                <i class="bi bi-clipboard chip-icon"></i>
               </button>
             </p>
 
@@ -64,7 +63,7 @@
           <div class="header-actions">
             <!-- Upload Avatar Quick Button -->
             <button class="action-btn upload" @click="triggerFileSelect" title="Upload new avatar">
-              <i class="fa fa-upload btn-icon"></i>
+              <i class="bi bi-cloud-arrow-up-fill btn-icon"></i>
               <span>Upload Photo</span>
             </button>
 
@@ -72,14 +71,14 @@
             <button v-if="hasAvatar" class="action-btn delete-avatar" @click="confirmDeleteAvatar"
               :disabled="deletingAvatar" title="Remove current avatar picture">
               <span v-if="deletingAvatar" class="btn-spinner"></span>
-              <i v-else class="fa fa-trash btn-icon"></i>
+              <i v-else class="bi bi-trash3-fill btn-icon"></i>
               <span>Delete Avatar</span>
             </button>
 
             <!-- Sync Profile Button -->
             <button class="action-btn refresh" @click="refreshProfile" :disabled="authStore.profileLoading">
               <span v-if="authStore.profileLoading" class="btn-spinner"></span>
-              <i v-else class="fa fa-refresh btn-icon"></i>
+              <i v-else class="bi bi-arrow-clockwise btn-icon"></i>
               <span>{{ authStore.profileLoading ? 'Syncing...' : 'Sync Profile' }}</span>
             </button>
           </div>
@@ -91,7 +90,7 @@
         <!-- Metric 1: Account Role -->
         <div class="metric-card">
           <div class="metric-icon-box role-box">
-            <i :class="authStore.isAdmin ? 'fa fa-star' : 'fa fa-user'"></i>
+            <i :class="authStore.isAdmin ? 'bi bi-shield-fill-check' : 'bi bi-person-fill'"></i>
           </div>
           <div class="metric-details">
             <span class="metric-label">Access Level</span>
@@ -103,7 +102,7 @@
         <!-- Metric 2: Identity Verification -->
         <div class="metric-card">
           <div class="metric-icon-box verified-box" :class="{ verified: authStore.isVerified }">
-            <i class="fa fa-check-circle"></i>
+            <i class="bi bi-patch-check-fill"></i>
           </div>
           <div class="metric-details">
             <span class="metric-label">Identity Status</span>
@@ -117,7 +116,7 @@
         <!-- Metric 3: Age / Rider Tier -->
         <div class="metric-card">
           <div class="metric-icon-box age-box">
-            <i class="fa fa-birthday-cake"></i>
+            <i class="bi bi-calendar2-heart-fill"></i>
           </div>
           <div class="metric-details">
             <span class="metric-label">Rider Age</span>
@@ -129,7 +128,7 @@
         <!-- Metric 4: 2FA Security -->
         <div class="metric-card">
           <div class="metric-icon-box security-box" :class="{ active: authStore.twoFactorEnabled }">
-            <i class="fa fa-lock"></i>
+            <i class="bi bi-shield-lock-fill"></i>
           </div>
           <div class="metric-details">
             <span class="metric-label">2-Factor Auth (2FA)</span>
@@ -137,7 +136,7 @@
               {{ authStore.twoFactorEnabled ? 'Enabled' : 'Disabled' }}
             </strong>
             <span class="metric-sub">{{ authStore.twoFactorEnabled ? 'Hardware / TOTP Active' : 'Setup Recommended'
-              }}</span>
+            }}</span>
           </div>
         </div>
       </section>
@@ -147,7 +146,7 @@
         <!-- Left Panel: Account Details -->
         <div class="panel-card">
           <div class="panel-header">
-            <div class="panel-header-icon"><i class="fa fa-id-card"></i></div>
+            <div class="panel-header-icon"><i class="bi bi-person-vcard-fill"></i></div>
             <div class="panel-header-text">
               <h3>Profile & Identity Information</h3>
               <p>Personal credentials and user settings</p>
@@ -157,7 +156,7 @@
           <div class="panel-body info-list">
             <div class="info-item">
               <div class="info-key">
-                <span class="info-icon"><i class="fa fa-hashtag"></i></span>
+                <span class="info-icon"><i class="bi bi-hash"></i></span>
                 <span>Account ID</span>
               </div>
               <div class="info-val font-mono">
@@ -169,7 +168,7 @@
 
             <div class="info-item">
               <div class="info-key">
-                <span class="info-icon"><i class="fa fa-user"></i></span>
+                <span class="info-icon"><i class="bi bi-person-fill"></i></span>
                 <span>Full Name</span>
               </div>
               <div class="info-val font-bold">
@@ -179,7 +178,7 @@
 
             <div class="info-item">
               <div class="info-key">
-                <span class="info-icon"><i class="fa fa-envelope"></i></span>
+                <span class="info-icon"><i class="bi bi-envelope-fill"></i></span>
                 <span>Email Address</span>
               </div>
               <div class="info-val">
@@ -189,7 +188,7 @@
 
             <div class="info-item">
               <div class="info-key">
-                <span class="info-icon"><i class="fa fa-birthday-cake"></i></span>
+                <span class="info-icon"><i class="bi bi-calendar2-event-fill"></i></span>
                 <span>Age</span>
               </div>
               <div class="info-val">
@@ -199,7 +198,7 @@
 
             <div class="info-item">
               <div class="info-key">
-                <span class="info-icon"><i class="fa fa-image"></i></span>
+                <span class="info-icon"><i class="bi bi-image-fill"></i></span>
                 <span>Avatar Path</span>
               </div>
               <div class="info-val text-truncate font-mono">
@@ -209,7 +208,7 @@
 
             <div class="info-item">
               <div class="info-key">
-                <span class="info-icon"><i class="fa fa-shield"></i></span>
+                <span class="info-icon"><i class="bi bi-shield-check"></i></span>
                 <span>System Role</span>
               </div>
               <div class="info-val">
@@ -221,7 +220,7 @@
 
             <div class="info-item">
               <div class="info-key">
-                <span class="info-icon"><i class="fa fa-calendar"></i></span>
+                <span class="info-icon"><i class="bi bi-calendar3"></i></span>
                 <span>Created At</span>
               </div>
               <div class="info-val text-muted">
@@ -231,7 +230,7 @@
 
             <div class="info-item">
               <div class="info-key">
-                <span class="info-icon"><i class="fa fa-clock-o"></i></span>
+                <span class="info-icon"><i class="bi bi-clock-history"></i></span>
                 <span>Last Updated</span>
               </div>
               <div class="info-val text-muted">
@@ -244,7 +243,7 @@
         <!-- Right Panel: Admin Privileges & System Capabilities -->
         <div class="panel-card">
           <div class="panel-header">
-            <div class="panel-header-icon"><i class="fa fa-shield"></i></div>
+            <div class="panel-header-icon"><i class="bi bi-shield-shaded"></i></div>
             <div class="panel-header-text">
               <h3>{{ authStore.isAdmin ? 'Admin Root Permissions' : 'Rider Privileges' }}</h3>
               <p>Granted system capabilities and security protocols</p>
@@ -263,14 +262,18 @@
               </span>
             </div>
 
-            <!-- Security Recommendation Callout -->
-            <div v-if="!authStore.twoFactorEnabled" class="security-callout">
-              <div class="callout-icon"><i class="fa fa-exclamation-triangle"></i></div>
-              <div class="callout-text">
-                <strong>Enable Two-Factor Authentication</strong>
-                <p>Protect your administrator privileges against unauthorized garage access.</p>
+            <!-- Security 2FA Callout -->
+            <div class="security-callout" :class="{ 'callout-success': authStore.twoFactorEnabled }">
+              <div class="callout-icon">
+                <i :class="authStore.twoFactorEnabled ? 'bi bi-shield-fill-check' : 'bi bi-shield-exclamation'"></i>
               </div>
-              <button class="callout-action-btn" @click="handleSetup2FA">Configure 2FA</button>
+              <div class="callout-text">
+                <strong>{{ authStore.twoFactorEnabled ? 'Two-Factor Authentication Active' : 'Enable Two-Factor Authentication' }}</strong>
+                <p>{{ authStore.twoFactorEnabled ? 'Your account is secured with TOTP-based 2FA.' : 'Protect your account against unauthorized access.' }}</p>
+              </div>
+              <button class="callout-action-btn" :class="{ 'btn-danger-outline': authStore.twoFactorEnabled }" @click="handleSetup2FA">
+                {{ authStore.twoFactorEnabled ? 'Disable 2FA' : 'Configure 2FA' }}
+              </button>
             </div>
           </div>
         </div>
@@ -289,7 +292,7 @@
           <div class="detail-badge font-mono">POST /auth/avatar</div>
           <h4 class="modal-file-name">{{ selectedFile.name }}</h4>
           <span class="modal-file-meta">{{ formatFileSize(selectedFile.size) }} • {{ selectedFile.type || 'image'
-            }}</span>
+          }}</span>
         </div>
       </div>
 
@@ -299,7 +302,7 @@
         </button>
         <button class="modal-btn confirm" @click="confirmUploadAvatar" :disabled="uploadingAvatar">
           <span v-if="uploadingAvatar" class="btn-spinner"></span>
-          <i v-else class="fa fa-upload btn-icon"></i>
+          <i v-else class="bi bi-cloud-arrow-up-fill btn-icon"></i>
           <span>{{ uploadingAvatar ? 'Uploading...' : 'Confirm & Upload' }}</span>
         </button>
       </template>
@@ -323,6 +326,109 @@
         </button>
         <button class="modal-btn confirm" @click="triggerFileSelectFromModal">
           Change Photo
+        </button>
+      </template>
+    </BaseModal>
+
+    <!-- 2FA Setup Modal -->
+    <BaseModal v-model="show2FASetupModal" title="Enable Two-Factor Authentication"
+      subtitle="Scan the QR code with your authenticator app" size="md" @close="close2FASetupModal">
+      <div class="twofa-modal-body">
+        <!-- Step 1: Loading / Generating -->
+        <div v-if="twoFALoading" class="twofa-loading">
+          <span class="btn-spinner twofa-spinner"></span>
+          <p>Generating secure 2FA secret…</p>
+        </div>
+
+        <!-- Step 2: Show QR Code -->
+        <div v-else-if="twoFAQrCode && !twoFAVerified" class="twofa-setup-content">
+          <div class="twofa-qr-box">
+            <img :src="twoFAQrCode" alt="2FA QR Code" class="twofa-qr-img" />
+          </div>
+          <p class="twofa-instruction">
+            <i class="bi bi-phone-fill"></i>
+            Open <strong>Google Authenticator</strong> or <strong>Authy</strong>, tap <em>Add Account</em>, then scan the QR code above.
+          </p>
+          <div v-if="twoFASecret" class="twofa-secret-row">
+            <span class="twofa-secret-label">Manual key:</span>
+            <code class="twofa-secret-code">{{ twoFASecret }}</code>
+            <button class="copy-inline-btn" @click="copyText(twoFASecret, 'Secret copied!')">
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </div>
+          <div class="twofa-input-group">
+            <label class="twofa-label">Enter 6-digit code from your app to confirm</label>
+            <input
+              v-model="twoFAToken"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="000000"
+              class="twofa-token-input"
+              @keyup.enter="confirmEnable2FA"
+            />
+            <p v-if="twoFAError" class="twofa-error"><i class="bi bi-exclamation-circle-fill"></i> {{ twoFAError }}</p>
+          </div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div v-else-if="twoFAVerified" class="twofa-success">
+          <div class="twofa-success-icon"><i class="bi bi-shield-check"></i></div>
+          <h4>2FA Enabled!</h4>
+          <p>Your account is now protected with two-factor authentication.</p>
+        </div>
+      </div>
+
+      <template #footer>
+        <button class="modal-btn cancel" @click="close2FASetupModal" :disabled="twoFAVerifying">Cancel</button>
+        <button
+          v-if="twoFAQrCode && !twoFAVerified"
+          class="modal-btn confirm"
+          @click="confirmEnable2FA"
+          :disabled="twoFAVerifying || twoFAToken.length < 6"
+        >
+          <span v-if="twoFAVerifying" class="btn-spinner"></span>
+          <i v-else class="bi bi-shield-lock-fill btn-icon"></i>
+          <span>{{ twoFAVerifying ? 'Verifying…' : 'Enable 2FA' }}</span>
+        </button>
+        <button v-else-if="twoFAVerified" class="modal-btn confirm" @click="close2FASetupModal">
+          <i class="bi bi-check-lg btn-icon"></i> Done
+        </button>
+      </template>
+    </BaseModal>
+
+    <!-- 2FA Disable Modal -->
+    <BaseModal v-model="show2FADisableModal" title="Disable Two-Factor Authentication"
+      subtitle="Enter your current TOTP code to turn off 2FA" size="sm" @close="close2FADisableModal">
+      <div class="twofa-modal-body">
+        <div class="twofa-disable-warning">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <p>Disabling 2FA will reduce your account security. Make sure this is intentional.</p>
+        </div>
+        <div class="twofa-input-group">
+          <label class="twofa-label">Enter your 6-digit authenticator code</label>
+          <input
+            v-model="twoFADisableToken"
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="000000"
+            class="twofa-token-input"
+            @keyup.enter="confirmDisable2FA"
+          />
+          <p v-if="twoFADisableError" class="twofa-error"><i class="bi bi-exclamation-circle-fill"></i> {{ twoFADisableError }}</p>
+        </div>
+      </div>
+      <template #footer>
+        <button class="modal-btn cancel" @click="close2FADisableModal" :disabled="twoFADisabling">Cancel</button>
+        <button
+          class="modal-btn delete"
+          @click="confirmDisable2FA"
+          :disabled="twoFADisabling || twoFADisableToken.length < 6"
+        >
+          <span v-if="twoFADisabling" class="btn-spinner"></span>
+          <i v-else class="bi bi-shield-x btn-icon"></i>
+          <span>{{ twoFADisabling ? 'Disabling…' : 'Disable 2FA' }}</span>
         </button>
       </template>
     </BaseModal>
@@ -541,8 +647,94 @@ const copyText = async (text, message = 'Copied to clipboard!') => {
   }
 };
 
-const handleSetup2FA = () => {
-  toast.info('2FA Setup module will guide you through TOTP authenticator pairing.', 'Security Center');
+// ── 2FA Setup ──────────────────────────────────────────────────────────────
+const show2FASetupModal = ref(false);
+const show2FADisableModal = ref(false);
+const twoFALoading = ref(false);
+const twoFAVerifying = ref(false);
+const twoFADisabling = ref(false);
+const twoFAQrCode = ref(null);
+const twoFASecret = ref(null);
+const twoFAToken = ref('');
+const twoFADisableToken = ref('');
+const twoFAError = ref('');
+const twoFADisableError = ref('');
+const twoFAVerified = ref(false);
+
+const handleSetup2FA = async () => {
+  if (authStore.twoFactorEnabled) {
+    // Already enabled — open disable modal instead
+    twoFADisableToken.value = '';
+    twoFADisableError.value = '';
+    show2FADisableModal.value = true;
+    return;
+  }
+  // Open setup modal and fetch QR code
+  twoFAQrCode.value = null;
+  twoFASecret.value = null;
+  twoFAToken.value = '';
+  twoFAError.value = '';
+  twoFAVerified.value = false;
+  show2FASetupModal.value = true;
+  twoFALoading.value = true;
+  try {
+    const data = await authStore.setup2FA();
+    twoFAQrCode.value = data?.qrCode || data?.data?.qrCode || null;
+    twoFASecret.value = data?.secret || data?.data?.secret || null;
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Failed to initiate 2FA setup';
+    toast.error(typeof msg === 'object' ? JSON.stringify(msg) : msg, '2FA Error');
+    show2FASetupModal.value = false;
+  } finally {
+    twoFALoading.value = false;
+  }
+};
+
+const confirmEnable2FA = async () => {
+  if (twoFAToken.value.length < 6) return;
+  twoFAVerifying.value = true;
+  twoFAError.value = '';
+  try {
+    await authStore.verify2FA(twoFAToken.value);
+    twoFAVerified.value = true;
+    toast.success('Two-factor authentication enabled successfully!', '2FA Active');
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Invalid verification code';
+    twoFAError.value = typeof msg === 'object' ? JSON.stringify(msg) : msg;
+  } finally {
+    twoFAVerifying.value = false;
+  }
+};
+
+const close2FASetupModal = () => {
+  show2FASetupModal.value = false;
+  twoFAQrCode.value = null;
+  twoFASecret.value = null;
+  twoFAToken.value = '';
+  twoFAError.value = '';
+  twoFAVerified.value = false;
+};
+
+const confirmDisable2FA = async () => {
+  if (twoFADisableToken.value.length < 6) return;
+  twoFADisabling.value = true;
+  twoFADisableError.value = '';
+  try {
+    await authStore.disable2FA(twoFADisableToken.value);
+    show2FADisableModal.value = false;
+    toast.success('Two-factor authentication has been disabled.', '2FA Disabled');
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Invalid code or 2FA disable failed';
+    twoFADisableError.value = typeof msg === 'object' ? JSON.stringify(msg) : msg;
+  } finally {
+    twoFADisabling.value = false;
+  }
+};
+
+const close2FADisableModal = () => {
+  show2FADisableModal.value = false;
+  twoFADisableToken.value = '';
+  twoFADisableError.value = '';
 };
 
 const refreshProfile = async () => {
@@ -590,36 +782,22 @@ onMounted(async () => {
 /* Hero Profile Header Card */
 .profile-hero-card {
   position: relative;
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.22);
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-}
-
-.hero-cover-pattern {
-  height: 120px;
-  background: linear-gradient(135deg, #0f172a 0%, #0369a1 50%, #0284c7 100%);
-  position: relative;
-}
-
-.hero-cover-pattern::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
-  background-size: 16px 16px;
-  opacity: 0.4;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.7), 0 0 35px rgba(14, 165, 233, 0.08);
+  padding: 2.25rem;
 }
 
 .hero-content {
-  padding: 0 2rem 2rem 2rem;
+  padding: 0;
   display: flex;
-  align-items: flex-end;
-  gap: 1.75rem;
-  margin-top: -50px;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 0;
   position: relative;
   z-index: 2;
   flex-wrap: wrap;
@@ -631,22 +809,33 @@ onMounted(async () => {
 
 .avatar-frame {
   position: relative;
-  width: 110px;
-  height: 110px;
-  border-radius: 24px;
+  width: 104px;
+  height: 104px;
+  border-radius: 22px;
   background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 4px solid #0f172a;
-  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4);
+  border: 3px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.35);
   overflow: hidden;
   cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.avatar-frame:hover {
+  transform: scale(1.03);
+  box-shadow: 0 12px 30px rgba(14, 165, 233, 0.5);
 }
 
 .avatar-frame.is-admin {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.35);
+}
+
+.avatar-frame.is-admin:hover {
+  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.5);
 }
 
 .avatar-img {
@@ -831,12 +1020,6 @@ onMounted(async () => {
   text-decoration: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-.action-btn .btn-icon {
-  width: 1.1rem;
-  height: 1.1rem;
-}
-
 .action-btn.upload {
   background: rgba(14, 165, 233, 0.15);
   border: 1px solid rgba(56, 189, 248, 0.4);
@@ -1371,10 +1554,14 @@ onMounted(async () => {
     grid-template-columns: 1fr;
   }
 
+  .profile-hero-card {
+    padding: 1.5rem;
+  }
+
   .hero-content {
     flex-direction: column;
     align-items: flex-start;
-    margin-top: -40px;
+    margin-top: 0;
     gap: 1.25rem;
   }
 
@@ -1382,5 +1569,219 @@ onMounted(async () => {
     width: 100%;
     justify-content: flex-start;
   }
+}
+
+/* ── 2FA Modal Styles ──────────────────────────────────────────────────────── */
+.twofa-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.twofa-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 0;
+  color: rgba(248, 250, 252, 0.6);
+  font-size: 0.9rem;
+}
+
+.twofa-spinner {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+.twofa-setup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.twofa-qr-box {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.twofa-qr-img {
+  width: 180px;
+  height: 180px;
+  display: block;
+  border-radius: 8px;
+}
+
+.twofa-instruction {
+  font-size: 0.875rem;
+  color: rgba(248, 250, 252, 0.7);
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.twofa-instruction i {
+  margin-right: 0.3rem;
+  color: #38bdf8;
+}
+
+.twofa-secret-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.twofa-secret-label {
+  font-size: 0.75rem;
+  color: rgba(248, 250, 252, 0.5);
+  white-space: nowrap;
+}
+
+.twofa-secret-code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+  flex: 1;
+  word-break: break-all;
+}
+
+.twofa-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.twofa-label {
+  font-size: 0.8rem;
+  color: rgba(248, 250, 252, 0.6);
+  font-weight: 500;
+}
+
+.twofa-token-input {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1.5px solid rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  color: #f8fafc;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  padding: 0.65rem 1rem;
+  text-align: center;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.twofa-token-input::placeholder {
+  color: rgba(248, 250, 252, 0.2);
+  letter-spacing: 0.3em;
+}
+
+.twofa-token-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+}
+
+.twofa-error {
+  font-size: 0.8rem;
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.twofa-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+.twofa-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+.twofa-success h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #10b981;
+  margin: 0;
+}
+
+.twofa-success p {
+  font-size: 0.875rem;
+  color: rgba(248, 250, 252, 0.6);
+  margin: 0;
+}
+
+.twofa-disable-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+
+.twofa-disable-warning i {
+  font-size: 1.1rem;
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.twofa-disable-warning p {
+  font-size: 0.85rem;
+  color: rgba(248, 250, 252, 0.7);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Callout success variant (2FA enabled) */
+.security-callout.callout-success {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.security-callout.callout-success .callout-icon {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.callout-action-btn.btn-danger-outline {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.callout-action-btn.btn-danger-outline:hover {
+  background: rgba(248, 113, 113, 0.22);
 }
 </style>

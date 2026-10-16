@@ -16,6 +16,9 @@ export const API_ENDPOINTS = {
     GOOGLE_CALLBACK: '/auth/google/callback',
     FORGOT_PASSWORD: '/auth/forgot-password-request',
     RESET_PASSWORD: '/auth/reset-password',
+    TWO_FA_SETUP: '/auth/2fa/setup',
+    TWO_FA_VERIFY: '/auth/2fa/verify',
+    TWO_FA_DISABLE: '/auth/2fa/disable',
   },
   BIKES: {
     LIST: '/bikes',

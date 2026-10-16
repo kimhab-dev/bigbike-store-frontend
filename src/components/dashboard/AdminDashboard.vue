@@ -15,7 +15,7 @@
           </div>
         </div>
         <button class="mobile-close-btn" @click="isMobileMenuOpen = false">
-          <i class="fa fa-times"></i>
+          <i class="bi bi-x-lg"></i>
         </button>
       </div>
 
@@ -47,7 +47,7 @@
 
         <button class="nav-item" :class="{ active: activeTab === 'orders' }" @click="selectTab('orders')">
           <div class="nav-item-left">
-            <i class="fa fa-shopping-cart nav-icon"></i>
+            <i class="bi bi-cart3 nav-icon"></i>
             <span class="nav-label">Orders</span>
           </div>
           <span class="nav-count amber-count">{{ orders.length }}</span>
@@ -55,7 +55,7 @@
 
         <button class="nav-item" :class="{ active: activeTab === 'users' }" @click="selectTab('users')">
           <div class="nav-item-left">
-            <i class="fa fa-users nav-icon"></i>
+            <i class="bi bi-people nav-icon"></i>
             <span class="nav-label">Users</span>
           </div>
           <span class="nav-count emerald-count">{{ users.length }}</span>
@@ -65,17 +65,17 @@
       <!-- Sidebar Footer Actions -->
       <div class="sidebar-footer">
         <router-link to="/profile" class="footer-action-btn">
-          <i class="fa fa-user-circle f-icon"></i>
+          <i class="bi bi-person-circle f-icon"></i>
           <span>Admin Profile</span>
         </router-link>
 
         <button class="footer-action-btn sync-btn" @click="refreshAllModules" :disabled="isRefreshing">
-          <i class="fa fa-refresh f-icon" :class="{ 'spin-anim': isRefreshing }"></i>
+          <i class="bi bi-arrow-clockwise f-icon" :class="{ 'spin-anim': isRefreshing }"></i>
           <span>{{ isRefreshing ? 'Syncing...' : 'Sync All Data' }}</span>
         </button>
 
         <button class="footer-action-btn logout-btn" @click="handleLogout">
-          <i class="fa fa-sign-out f-icon"></i>
+          <i class="bi bi-box-arrow-right f-icon"></i>
           <span>Sign Out</span>
         </button>
       </div>
@@ -87,7 +87,7 @@
       <header class="main-topbar">
         <div class="topbar-left">
           <button class="mobile-toggle-btn" @click="isMobileMenuOpen = true" title="Open Sidebar">
-            <i class="fa fa-bars"></i>
+            <i class="bi bi-list"></i>
           </button>
           <div class="breadcrumb-area">
             <span class="breadcrumb-root">Admin Portal</span>
@@ -112,7 +112,7 @@
           </router-link>
 
           <button class="topbar-logout-btn" @click="handleLogout" title="Sign Out">
-            <i class="fa fa-sign-out t-logout-icon"></i>
+            <i class="bi bi-box-arrow-right t-logout-icon"></i>
           </button>
         </div>
       </header>

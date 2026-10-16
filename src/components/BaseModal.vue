@@ -1,41 +1,54 @@
 <template>
   <Teleport to="body">
-    <Transition name="modal-pop">
+    <Transition name="modal-fade">
       <div
         v-if="isOpen"
         class="modal-backdrop"
+        :class="{ 'modal-centered': centered }"
         @click.self="handleOverlayClick"
         tabindex="-1"
         @keydown.esc="handleClose"
       >
-        <div class="modal-card" :class="[`modal-${size}`]" role="dialog" aria-modal="true">
+        <div
+          class="modal-card"
+          :class="[`modal-${size}`]"
+          role="dialog"
+          aria-modal="true"
+        >
           <!-- Modal Header -->
-          <div class="modal-header">
-            <div class="header-text">
+          <div v-if="!hideHeader" class="modal-header">
+            <div class="header-main">
               <slot name="header">
-                <h3 v-if="title" class="modal-title">{{ title }}</h3>
-                <p v-if="subtitle" class="modal-subtitle">{{ subtitle }}</p>
+                <div v-if="icon || $slots.icon" class="modal-header-icon">
+                  <slot name="icon">
+                    <i :class="icon"></i>
+                  </slot>
+                </div>
+                <div class="header-text">
+                  <h3 v-if="title" class="modal-title">{{ title }}</h3>
+                  <p v-if="subtitle" class="modal-subtitle">{{ subtitle }}</p>
+                </div>
               </slot>
             </div>
+
             <button
+              v-if="!hideClose"
               type="button"
               class="modal-close-btn"
               @click="handleClose"
-              aria-label="Close Modal"
+              aria-label="Close modal"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
+              <i class="bi bi-x-lg"></i>
             </button>
           </div>
 
           <!-- Modal Body -->
-          <div class="modal-body">
+          <div class="modal-body" :class="bodyClass">
             <slot></slot>
           </div>
 
-          <!-- Modal Footer (Optional) -->
-          <div v-if="$slots.footer" class="modal-footer">
+          <!-- Modal Footer -->
+          <div v-if="$slots.footer" class="modal-footer" :class="footerClass">
             <slot name="footer"></slot>
           </div>
         </div>
@@ -64,13 +77,38 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  icon: {
+    type: String,
+    default: '',
+  },
   size: {
     type: String,
-    default: 'md', // sm, md, lg, xl
+    default: 'md', // sm, md, lg, xl, full
+    validator: (s) => ['sm', 'md', 'lg', 'xl', 'full'].includes(s),
   },
   closeOnOverlay: {
     type: Boolean,
     default: true,
+  },
+  centered: {
+    type: Boolean,
+    default: true,
+  },
+  hideHeader: {
+    type: Boolean,
+    default: false,
+  },
+  hideClose: {
+    type: Boolean,
+    default: false,
+  },
+  bodyClass: {
+    type: String,
+    default: '',
+  },
+  footerClass: {
+    type: String,
+    default: '',
   },
 });
 
@@ -90,47 +128,58 @@ const handleOverlayClick = () => {
   }
 };
 
-// Prevent page body scrolling when modal is open
+// Manage body scroll locking cleanly
 watch(isOpen, (newVal) => {
-  if (newVal) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = '';
+  if (typeof document !== 'undefined') {
+    if (newVal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
   }
 });
 
 onUnmounted(() => {
-  document.body.style.overflow = '';
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = '';
+  }
 });
 </script>
 
 <style scoped>
+/* Backdrop overlay */
 .modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(7, 10, 18, 0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(7, 10, 19, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: flex-start;
   padding: 1.5rem;
   overflow-y: auto;
 }
 
+.modal-backdrop.modal-centered {
+  align-items: center;
+}
+
+/* Modal Card */
 .modal-card {
   position: relative;
   width: 100%;
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: 20px;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(14, 165, 233, 0.15);
+  background: #0f172a;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 1.25rem;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 35px rgba(14, 165, 233, 0.12);
   color: #f8fafc;
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
+  max-height: calc(100vh - 3rem);
   overflow: hidden;
+  margin: auto 0;
 }
 
 /* Modal Sizes */
@@ -139,58 +188,87 @@ onUnmounted(() => {
 }
 
 .modal-md {
-  max-width: 540px;
+  max-width: 560px;
 }
 
 .modal-lg {
-  max-width: 720px;
+  max-width: 760px;
 }
 
 .modal-xl {
-  max-width: 960px;
+  max-width: 980px;
+}
+
+.modal-full {
+  max-width: calc(100vw - 3rem);
+  height: calc(100vh - 3rem);
 }
 
 /* Header */
 .modal-header {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+  border-bottom: 1px solid rgba(30, 41, 59, 0.8);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.modal-header-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.header-text {
+  min-width: 0;
 }
 
 .modal-title {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #f8fafc;
   margin: 0;
+  line-height: 1.3;
 }
 
 .modal-subtitle {
   font-size: 0.85rem;
   color: #94a3b8;
-  margin-top: 0.2rem;
+  margin: 0.2rem 0 0 0;
 }
 
+/* Close Button */
 .modal-close-btn {
   background: rgba(30, 41, 59, 0.6);
   border: 1px solid rgba(71, 85, 105, 0.5);
   color: #94a3b8;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
-}
-
-.modal-close-btn svg {
-  width: 18px;
-  height: 18px;
+  font-size: 0.85rem;
 }
 
 .modal-close-btn:hover {
@@ -205,33 +283,40 @@ onUnmounted(() => {
   padding: 1.5rem;
   overflow-y: auto;
   flex: 1;
+  color: #cbd5e1;
 }
 
 /* Footer */
 .modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(51, 65, 85, 0.6);
-  background: rgba(11, 15, 25, 0.6);
+  padding: 1.15rem 1.5rem;
+  border-top: 1px solid rgba(30, 41, 59, 0.8);
+  background: rgba(11, 15, 25, 0.7);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.85rem;
+  gap: 0.75rem;
 }
 
 /* Transitions */
-.modal-pop-enter-active,
-.modal-pop-leave-active {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.modal-pop-enter-from,
-.modal-pop-leave-to {
+.modal-fade-enter-from,
+.modal-fade-leave-to {
   opacity: 0;
 }
 
-.modal-pop-enter-from .modal-card,
-.modal-pop-leave-to .modal-card {
-  transform: scale(0.9) translateY(20px);
+.modal-fade-enter-from .modal-card,
+.modal-fade-leave-to .modal-card {
   opacity: 0;
+  transform: scale(0.94) translateY(12px);
+}
+
+.modal-fade-enter-to .modal-card,
+.modal-fade-leave-from .modal-card {
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 </style>
