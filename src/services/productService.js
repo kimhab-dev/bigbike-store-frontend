@@ -17,7 +17,7 @@ export const productService = {
     return api.get(API_ENDPOINTS.PRODUCTS.MY);
   },
 
-  // POST /products (Create new product: { name, price, description, stock })
+  // POST /products (Create new product: { name, price, description, category_id, stock, year, engince, color })
   createProduct(productData) {
     return api.post(API_ENDPOINTS.PRODUCTS.CREATE, productData);
   },
@@ -36,7 +36,7 @@ export const productService = {
     });
   },
 
-  // PATCH /products/:productId (Update product: { name, price, description })
+  // PATCH /products/:productId (Update product: { name, price, description, category_id, stock, year, engince, color })
   updateProduct(productId, productData) {
     return api.patch(API_ENDPOINTS.PRODUCTS.DETAIL(productId), productData);
   },

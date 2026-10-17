@@ -160,6 +160,39 @@ export const useAuthStore = defineStore('auth', {
       return response?.data || response;
     },
 
+    // Called after login when the backend requires 2FA (returns requires2FA: true + tempToken)
+    async verifyLoginTOTP(tempToken, code) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await authService.verifyLoginTOTP(tempToken, code);
+        // Backend returns { access_token } or similar after successful 2FA
+        const token =
+          response?.access_token ||
+          response?.token ||
+          response?.data?.access_token ||
+          response?.data?.token;
+        if (token) {
+          this.token = token;
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+        }
+        await this.fetchProfile();
+        return response;
+      } catch (err) {
+        const data = err.response?.data;
+        let rawMsg = data?.message || data?.error || err.message || '2FA verification failed';
+        if (typeof rawMsg === 'object' && rawMsg !== null) {
+          rawMsg = rawMsg.message || rawMsg.error || JSON.stringify(rawMsg);
+        }
+        this.error = Array.isArray(rawMsg) ? rawMsg.join(', ') : String(rawMsg);
+        const errorObj = new Error(this.error);
+        errorObj.response = err.response;
+        throw errorObj;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async verify2FA(token) {
       const response = await authService.verify2FA(token);
       // After successful verify, refresh profile so twoFactorEnabled reflects true

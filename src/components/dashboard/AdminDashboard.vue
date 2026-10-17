@@ -169,6 +169,15 @@
                         <ProductImage :src="bike" :alt="bike.name" img-class="bike-thumb" />
                         <div class="product-info">
                           <strong class="bike-name">{{ bike.name }}</strong>
+                          <div class="bike-specs-tags">
+                            <span class="spec-tag year-tag">{{ bike.year || 2026 }}</span>
+                            <span class="spec-tag engine-tag">{{ (bike.engince || bike.engine) ? `${bike.engince || bike.engine}cc` : '999cc' }}</span>
+                            <span class="spec-tag color-tag" v-if="bike.color">
+                              <span class="color-mini-dot" :style="{ backgroundColor: bike.color }"></span>
+                              {{ bike.color }}
+                            </span>
+                            <span class="spec-tag cat-tag">Cat #{{ bike.category_id || 1 }}</span>
+                          </div>
                           <span class="bike-id font-mono">ID: #{{ bike.id || bike._id }}</span>
                         </div>
                       </div>
@@ -446,27 +455,83 @@
       :title="editingProduct ? `Edit Product #${editingProduct.id || editingProduct._id}` : 'Create New Product'"
       :subtitle="editingProduct ? 'PATCH /products/:productId' : 'POST /products'" size="lg">
       <form @submit.prevent="saveProduct" class="modal-form">
+        <!-- Row 1: Name and Category -->
         <div class="form-row">
           <div class="form-field">
-            <label>Product Name (name)</label>
+            <label>Product / Machine Name (name)</label>
             <input v-model="productForm.name" type="text" placeholder="e.g. Yamaha R1M" required />
           </div>
           <div class="form-field">
-            <label>Price ($ USD)</label>
-            <input v-model.number="productForm.price" type="number" placeholder="10000" required />
+            <label>Category (category_id)</label>
+            <select v-model.number="productForm.category_id" class="form-select" required>
+              <option :value="1">Category 1 — Supersport / Superbike</option>
+              <option :value="2">Category 2 — Hyper Naked / Street</option>
+              <option :value="3">Category 3 — Sport Touring / Adventure</option>
+              <option :value="4">Category 4 — Cruiser / Bobber</option>
+              <option :value="5">Category 5 — Custom / Special</option>
+            </select>
           </div>
         </div>
 
+        <!-- Row 2: Price and Stock -->
         <div class="form-row">
           <div class="form-field">
-            <label>Description</label>
-            <input v-model="productForm.description" type="text" placeholder="e.g. 1000cc Crossplane Superbike"
-              required />
+            <label>Price ($ USD)</label>
+            <div class="input-addon-wrap">
+              <span class="input-addon-prefix">$</span>
+              <input v-model.number="productForm.price" type="number" min="0" placeholder="10000" required />
+            </div>
           </div>
           <div class="form-field">
-            <label>Stock Count</label>
-            <input v-model.number="productForm.stock" type="number" placeholder="10" required />
+            <label>Stock Quantity (stock)</label>
+            <input v-model.number="productForm.stock" type="number" min="0" placeholder="10" required />
           </div>
+        </div>
+
+        <!-- Row 3: Year and Engine (engince) -->
+        <div class="form-row">
+          <div class="form-field">
+            <label>Model Year (year)</label>
+            <input v-model.number="productForm.year" type="number" min="1990" max="2035" placeholder="2026" required />
+          </div>
+          <div class="form-field">
+            <label>Engine Displacement (engince)</label>
+            <div class="input-addon-wrap">
+              <input v-model.number="productForm.engince" type="number" min="50" max="3500" placeholder="999" required />
+              <span class="input-addon">cc</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Color with presets -->
+        <div class="form-field full-width">
+          <label>Color (color)</label>
+          <div class="color-picker-row">
+            <div class="color-input-wrap">
+              <span class="color-preview-circle" :style="{ backgroundColor: getValidColor(productForm.color) }"></span>
+              <input v-model="productForm.color" type="text" placeholder="e.g. white, black, blue, red" required />
+            </div>
+            <div class="color-preset-pills">
+              <button
+                v-for="preset in colorPresets"
+                :key="preset.value"
+                type="button"
+                class="color-preset-btn"
+                :class="{ active: productForm.color?.toLowerCase() === preset.value.toLowerCase() }"
+                @click="productForm.color = preset.value"
+                :title="preset.label"
+              >
+                <span class="color-swatch-sm" :style="{ backgroundColor: preset.hex }"></span>
+                <span>{{ preset.label }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Description -->
+        <div class="form-field full-width">
+          <label>Description (description)</label>
+          <input v-model="productForm.description" type="text" placeholder="e.g. Bigbike" required />
         </div>
 
         <!-- Product Image File Upload with Live Preview -->
@@ -564,9 +629,27 @@ const productPreviewUrl = ref(null);
 const productForm = reactive({
   name: 'Yamaha R1M',
   price: 10000,
-  description: 'Big Bike',
+  description: 'Bigbike',
+  category_id: 1,
   stock: 10,
+  year: 2026,
+  engince: 999,
+  color: 'white',
 });
+
+const colorPresets = [
+  { label: 'White', value: 'white', hex: '#f8fafc' },
+  { label: 'Black', value: 'black', hex: '#0f172a' },
+  { label: 'Blue', value: 'blue', hex: '#2563eb' },
+  { label: 'Red', value: 'red', hex: '#dc2626' },
+  { label: 'Silver', value: 'silver', hex: '#94a3b8' },
+  { label: 'Gray', value: 'gray', hex: '#4b5563' },
+];
+
+const getValidColor = (color) => {
+  if (!color) return '#ffffff';
+  return color;
+};
 
 // Products Data List
 const products = ref([]);
@@ -600,8 +683,12 @@ const openCreateProductModal = () => {
   editingProduct.value = null;
   productForm.name = 'Yamaha R1M';
   productForm.price = 10000;
-  productForm.description = 'Big Bike';
+  productForm.description = 'Bigbike';
+  productForm.category_id = 1;
   productForm.stock = 10;
+  productForm.year = 2026;
+  productForm.engince = 999;
+  productForm.color = 'white';
   selectedProductFile.value = null;
   productPreviewUrl.value = null;
   showProductModal.value = true;
@@ -609,10 +696,14 @@ const openCreateProductModal = () => {
 
 const openEditProductModal = (bike) => {
   editingProduct.value = bike;
-  productForm.name = bike.name;
-  productForm.price = bike.price;
-  productForm.description = bike.description || 'Big Bike';
+  productForm.name = bike.name || '';
+  productForm.price = bike.price ?? 10000;
+  productForm.description = bike.description || 'Bigbike';
+  productForm.category_id = bike.category_id ?? bike.categoryId ?? 1;
   productForm.stock = bike.stock ?? 10;
+  productForm.year = bike.year ?? 2026;
+  productForm.engince = bike.engince ?? bike.engine ?? 999;
+  productForm.color = bike.color || 'white';
   selectedProductFile.value = null;
   productPreviewUrl.value = null;
   showProductModal.value = true;
@@ -632,7 +723,11 @@ const saveProduct = async () => {
       name: productForm.name,
       price: Number(productForm.price),
       description: productForm.description,
+      category_id: Number(productForm.category_id),
       stock: Number(productForm.stock),
+      year: Number(productForm.year),
+      engince: Number(productForm.engince),
+      color: productForm.color,
     };
 
     let savedBike = null;
@@ -1924,7 +2019,9 @@ onMounted(async () => {
 }
 
 .form-field input[type="text"],
-.form-field input[type="number"] {
+.form-field input[type="number"],
+.form-field select,
+.form-select {
   background: rgba(15, 23, 42, 0.8);
   border: 1px solid rgba(71, 85, 105, 0.5);
   padding: 0.65rem 0.9rem;
@@ -1934,10 +2031,174 @@ onMounted(async () => {
   outline: none;
   font-family: inherit;
   transition: border-color 0.2s;
+  width: 100%;
 }
 
-.form-field input:focus {
+.form-field select option {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-select:focus {
   border-color: #38bdf8;
+}
+
+/* Addon input wrap ($ and cc) */
+.input-addon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-addon-wrap input {
+  width: 100%;
+}
+
+.input-addon-prefix {
+  position: absolute;
+  left: 0.85rem;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.input-addon-wrap:has(.input-addon-prefix) input {
+  padding-left: 1.75rem;
+}
+
+.input-addon {
+  position: absolute;
+  right: 0.85rem;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.input-addon-wrap:has(.input-addon) input {
+  padding-right: 2.5rem;
+}
+
+/* Color picker row */
+.color-picker-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.color-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.color-preview-circle {
+  position: absolute;
+  left: 0.75rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+.color-input-wrap input {
+  padding-left: 2.35rem;
+}
+
+.color-preset-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.color-preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(71, 85, 105, 0.4);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.color-preset-btn:hover {
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.color-preset-btn.active {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.2);
+  color: #38bdf8;
+}
+
+.color-swatch-sm {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Table specs badges */
+.bike-specs-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.spec-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: rgba(30, 41, 59, 0.7);
+  color: #94a3b8;
+  border: 1px solid rgba(71, 85, 105, 0.4);
+  font-family: inherit;
+}
+
+.spec-tag.year-tag {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.spec-tag.engine-tag {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.spec-tag.cat-tag {
+  color: #a855f7;
+  border-color: rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.spec-tag.color-tag {
+  color: #e2e8f0;
+}
+
+.color-mini-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .file-picker {

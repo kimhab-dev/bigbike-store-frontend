@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/auth/reset-password',
     TWO_FA_SETUP: '/auth/2fa/setup',
     TWO_FA_VERIFY: '/auth/2fa/verify',
+    TWO_FA_LOGIN_VERIFY: '/auth/2fa/verify',
     TWO_FA_DISABLE: '/auth/2fa/disable',
   },
   BIKES: {

@@ -11,6 +11,14 @@
           <h2 class="form-title">Welcome Back, Rider</h2>
           <p class="form-subtitle">Access your garage, orders &amp; telemetry</p>
         </div>
+        <div v-else-if="activeTab === 'totp'" key="totp-header">
+          <div class="brand-pill totp-pill">
+            <span class="pulse-dot cyan"></span>
+            <span>2FA VERIFICATION</span>
+          </div>
+          <h2 class="form-title">Two-Factor Auth</h2>
+          <p class="form-subtitle">Enter the 6-digit code from your authenticator app</p>
+        </div>
         <div v-else-if="activeTab === 'register'" key="register-header">
           <div class="brand-pill register-pill">
             <span class="pulse-dot green"></span>
@@ -32,8 +40,91 @@
 
     <!-- ══════ FORGOT PASSWORD FORM ══════ -->
     <transition name="form-slide" mode="out-in">
-      <div v-if="activeTab === 'forgot'" key="forgot-form" class="auth-form">
-        <div v-if="forgotSuccess" class="forgot-success-box">
+
+      <!-- ══════ TOTP 2FA STEP ══════ -->
+      <form v-if="activeTab === 'totp'" key="totp-form" @submit.prevent="handleTOTPVerify" class="auth-form" novalidate>
+
+        <!-- QR Code block (only shown when server returns one) -->
+        <div v-if="pendingQrCode" class="totp-qr-section">
+          <div class="totp-qr-header" @click="showQrCode = !showQrCode">
+            <div class="totp-qr-label">
+              <i class="fa fa-qrcode"></i>
+              <span>First time? Scan QR Code</span>
+            </div>
+            <i :class="showQrCode ? 'fa fa-chevron-up' : 'fa fa-chevron-down'" class="totp-qr-chevron"></i>
+          </div>
+          <transition name="qr-expand">
+            <div v-if="showQrCode" class="totp-qr-body">
+              <p class="totp-qr-inst">Scan this with <strong>Google Authenticator</strong>, <strong>Authy</strong>, or any TOTP app:</p>
+              <div class="totp-qr-img-wrap">
+                <img :src="pendingQrCode" alt="2FA QR Code" class="totp-qr-img" />
+              </div>
+              <p class="totp-qr-done">Done scanning? Enter the code below ↓</p>
+            </div>
+          </transition>
+        </div>
+
+        <!-- Shield icon (shown when no QR) -->
+        <div v-else class="totp-shield-wrap">
+          <div class="totp-shield">
+            <i class="fa fa-shield"></i>
+          </div>
+          <p class="totp-hint">Open your authenticator app and enter the current code for <strong>BigBike Store</strong>.</p>
+        </div>
+
+        <!-- 6-digit OTP input -->
+        <div class="form-group">
+          <label for="totp-code">6-Digit Authenticator Code</label>
+          <div class="input-group" :class="{ 'is-error': totpError }">
+            <span class="input-icon">
+              <i class="fa fa-key"></i>
+            </span>
+            <input
+              id="totp-code"
+              v-model="totpCode"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="6"
+              placeholder="000000"
+              class="totp-input"
+              :disabled="totpLoading"
+              autocomplete="one-time-code"
+              @input="totpError = ''; totpCode = totpCode.replace(/\D/g, '').slice(0, 6)"
+            />
+            <!-- Code length indicator dots -->
+            <div class="totp-dots">
+              <span v-for="i in 6" :key="i" class="totp-dot" :class="{ filled: totpCode.length >= i }"></span>
+            </div>
+          </div>
+          <transition name="fade-slide">
+            <span v-if="totpError" class="error-msg">
+              <i class="fa fa-exclamation-circle error-icon"></i>
+              {{ totpError }}
+            </span>
+          </transition>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="submit-btn" :disabled="totpLoading || totpCode.length !== 6">
+          <span v-if="totpLoading" class="spinner-container">
+            <span class="spinner"></span><span>Verifying Code...</span>
+          </span>
+          <span v-else class="btn-text-wrapper">
+            <span>Verify &amp; Sign In</span>
+            <i class="fa fa-arrow-right arrow-icon"></i>
+          </span>
+        </button>
+
+        <!-- Back link -->
+        <p class="switch-hint">
+          Wrong account?
+          <button type="button" class="switch-link" @click="cancelTOTP">← Back to Sign In</button>
+        </p>
+      </form>
+
+      <div v-else-if="activeTab === 'forgot'" key="forgot-form" class="auth-form">
+          <div v-if="forgotSuccess" class="forgot-success-box">
           <div class="forgot-success-icon"><i class="fa fa-check"></i></div>
           <h3>Check Your Inbox</h3>
           <p>We've sent password reset instructions to <strong>{{ forgotEmail }}</strong>. Click the link in the email to set a new password.</p>
@@ -185,6 +276,60 @@ const switchTab = (tab) => {
   activeTab.value = tab;
 };
 
+// ── TOTP 2FA Login State ───────────────────────
+const totpCode = ref('');
+const totpLoading = ref(false);
+const totpError = ref('');
+const pendingTempToken = ref('');
+const pendingQrCode = ref('');
+const showQrCode = ref(false);
+
+const cancelTOTP = () => {
+  totpCode.value = '';
+  totpError.value = '';
+  pendingTempToken.value = '';
+  pendingQrCode.value = '';
+  showQrCode.value = false;
+  activeTab.value = 'login';
+};
+
+const handleTOTPVerify = async () => {
+  if (totpCode.value.length !== 6) {
+    totpError.value = 'Please enter the full 6-digit code.';
+    return;
+  }
+  totpLoading.value = true;
+  totpError.value = '';
+  try {
+    await authStore.verifyLoginTOTP(pendingTempToken.value, totpCode.value);
+    toast.success('Access authorized! Welcome back to BigBike Store.', 'Login Successful');
+    emit('success');
+    setTimeout(() => {
+      const redirectTo = route.query.redirect;
+      if (redirectTo && typeof redirectTo === 'string') {
+        router.push(redirectTo);
+      } else if (authStore.isAdmin) {
+        router.push('/dashboard');
+      } else {
+        router.push('/');
+      }
+    }, 450);
+  } catch (err) {
+    const data = err.response?.data;
+    let rawMsg = data?.message || err.message || 'Invalid or expired code. Please try again.';
+    if (typeof rawMsg === 'object' && rawMsg !== null) {
+      rawMsg = rawMsg.message || rawMsg.error || JSON.stringify(rawMsg);
+    }
+    const msg = Array.isArray(rawMsg) ? rawMsg.join(', ') : String(rawMsg);
+    totpError.value = msg;
+    toast.error(msg, '2FA Verification Failed');
+    totpCode.value = '';
+    emit('error', err);
+  } finally {
+    totpLoading.value = false;
+  }
+};
+
 // ── Login Form State ───────────────────────────
 const loading = ref(false);
 const showLoginPw = ref(false);
@@ -256,7 +401,34 @@ const handleLogin = async () => {
   loading.value = true;
   const userEmail = lf.email;
   try {
-    await authStore.login({ email: lf.email, password: lf.password });
+    const response = await authStore.login({ email: lf.email, password: lf.password });
+
+    // ── 2FA required: response shape is { result, data: { requiresTwoFactor, tempToken, twoFa } } ──
+    const twoFaData = response?.data;
+    const requires2FA =
+      twoFaData?.requiresTwoFactor ||
+      twoFaData?.requires2FA ||
+      response?.requiresTwoFactor ||
+      response?.requires2FA ||
+      response?.twoFactorRequired;
+    const tempToken =
+      twoFaData?.tempToken ||
+      response?.tempToken ||
+      response?.temp_token;
+
+    if (requires2FA && tempToken) {
+      pendingTempToken.value = tempToken;
+      // Extract QR code if present (first-time 2FA setup during login)
+      const qrCode = twoFaData?.twoFa?.qrCode || response?.twoFa?.qrCode || '';
+      pendingQrCode.value = qrCode;
+      showQrCode.value = !!qrCode; // auto-expand if QR is present
+      totpCode.value = '';
+      totpError.value = '';
+      activeTab.value = 'totp';
+      loading.value = false;
+      return;
+    }
+
     toast.success('Access authorized! Welcome back to BigBike Store.', 'Login Successful');
     emit('success');
     setTimeout(() => {
@@ -404,6 +576,12 @@ const handleLogin = async () => {
   color: #fbbf24;
 }
 
+.brand-pill.totp-pill {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(129, 140, 248, 0.35);
+  color: #a5b4fc;
+}
+
 .pulse-dot {
   width: 6px;
   height: 6px;
@@ -422,6 +600,185 @@ const handleLogin = async () => {
   background: #fbbf24;
   box-shadow: 0 0 8px #fbbf24;
 }
+
+.pulse-dot.cyan {
+  background: #a5b4fc;
+  box-shadow: 0 0 8px #a5b4fc;
+}
+
+/* ── TOTP Panel ───────────────────────────── */
+.totp-shield-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.5rem 0;
+}
+
+.totp-shield {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.14);
+  border: 2px solid rgba(129, 140, 248, 0.4);
+  color: #a5b4fc;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.18);
+  animation: shield-pulse 3s ease-in-out infinite;
+}
+
+@keyframes shield-pulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(99, 102, 241, 0.18); }
+  50% { box-shadow: 0 0 36px rgba(99, 102, 241, 0.35); }
+}
+
+.totp-hint {
+  font-size: 0.83rem;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.totp-hint strong {
+  color: #c7d2fe;
+}
+
+.totp-input {
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.35em;
+  text-align: center;
+  color: #a5b4fc !important;
+  font-variant-numeric: tabular-nums;
+  padding-right: 0.5rem !important;
+}
+
+/* ── TOTP digit progress dots ─────────────────── */
+.totp-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 0.85rem;
+  flex-shrink: 0;
+}
+
+.totp-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(165, 180, 252, 0.2);
+  border: 1.5px solid rgba(129, 140, 248, 0.3);
+  transition: all 0.18s ease;
+}
+
+.totp-dot.filled {
+  background: #a5b4fc;
+  border-color: #a5b4fc;
+  box-shadow: 0 0 6px rgba(165, 180, 252, 0.6);
+}
+
+/* ── TOTP QR Code section ─────────────────────── */
+.totp-qr-section {
+  border: 1px solid rgba(129, 140, 248, 0.22);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.totp-qr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.totp-qr-header:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.totp-qr-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #a5b4fc;
+}
+
+.totp-qr-chevron {
+  font-size: 0.75rem;
+  color: #a5b4fc;
+  opacity: 0.7;
+  transition: transform 0.2s;
+}
+
+.totp-qr-body {
+  padding: 0 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.totp-qr-inst {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.totp-qr-inst strong {
+  color: #c7d2fe;
+}
+
+.totp-qr-img-wrap {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 8px;
+  display: inline-block;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.totp-qr-img {
+  width: 160px;
+  height: 160px;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.totp-qr-done {
+  font-size: 0.76rem;
+  color: #a5b4fc;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* QR expand transition */
+.qr-expand-enter-active,
+.qr-expand-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.qr-expand-enter-from,
+.qr-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding: 0 1rem;
+}
+.qr-expand-enter-to,
+.qr-expand-leave-from {
+  opacity: 1;
+  max-height: 320px;
+}
+
 
 /* ── Forgot Success Box ──────────────────────── */
 .forgot-success-box {

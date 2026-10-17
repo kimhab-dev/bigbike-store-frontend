@@ -75,18 +75,33 @@
           <!-- Metadata -->
           <div class="meta-grid">
             <div class="meta-item">
-              <span class="meta-k">Listed</span>
-              <span class="meta-v">{{ formatDate(product.createdAt) }}</span>
+              <span class="meta-k">Model Year</span>
+              <span class="meta-v">{{ product.year || '2026' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-k">Displacement</span>
+              <span class="meta-v text-cyan">{{ (product.engince || product.engine) ? `${product.engince || product.engine} cc` : '999 cc' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-k">Color</span>
+              <span class="meta-v color-meta">
+                <span class="color-dot-inline" :style="{ backgroundColor: product.color || '#ffffff' }"></span>
+                <span>{{ product.color || 'White' }}</span>
+              </span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-k">Category</span>
+              <span class="meta-v">Cat #{{ product.category_id || 1 }}</span>
             </div>
             <div class="meta-item">
               <span class="meta-k">Stock Status</span>
               <span class="meta-v" :class="product.stock > 0 ? 'text-green' : 'text-red'">
-                {{ product.stock > 0 ? 'Available' : 'Sold Out' }}
+                {{ product.stock > 0 ? `${product.stock} Units Available` : 'Sold Out' }}
               </span>
             </div>
             <div class="meta-item">
-              <span class="meta-k">Units Available</span>
-              <span class="meta-v">{{ product.stock }}</span>
+              <span class="meta-k">Listed</span>
+              <span class="meta-v">{{ formatDate(product.createdAt) }}</span>
             </div>
           </div>
 
@@ -625,6 +640,22 @@ onMounted(() => {
 
 .text-green { color: #34d399 !important; }
 .text-red { color: #fb7185 !important; }
+.text-cyan { color: #38bdf8 !important; }
+
+.color-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.color-dot-inline {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+}
 
 /* ── Order Section ───────────────────────────── */
 .order-section {

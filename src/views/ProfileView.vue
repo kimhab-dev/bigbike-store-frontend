@@ -22,11 +22,6 @@
                 <span>Edit Photo</span>
               </div>
             </div>
-
-            <!-- Verified Badge on Avatar -->
-            <div v-if="authStore.isVerified" class="verified-badge-icon" title="Verified Identity">
-              <i class="bi bi-check-lg"></i>
-            </div>
           </div>
 
           <div class="user-meta">
@@ -57,30 +52,6 @@
                 <span class="tag-val">{{ formattedCreatedDate }}</span>
               </span>
             </div>
-          </div>
-
-          <!-- Header Action Buttons -->
-          <div class="header-actions">
-            <!-- Upload Avatar Quick Button -->
-            <button class="action-btn upload" @click="triggerFileSelect" title="Upload new avatar">
-              <i class="bi bi-cloud-arrow-up-fill btn-icon"></i>
-              <span>Upload Photo</span>
-            </button>
-
-            <!-- Delete Avatar Button (Visible if user has an avatar) -->
-            <button v-if="hasAvatar" class="action-btn delete-avatar" @click="confirmDeleteAvatar"
-              :disabled="deletingAvatar" title="Remove current avatar picture">
-              <span v-if="deletingAvatar" class="btn-spinner"></span>
-              <i v-else class="bi bi-trash3-fill btn-icon"></i>
-              <span>Delete Avatar</span>
-            </button>
-
-            <!-- Sync Profile Button -->
-            <button class="action-btn refresh" @click="refreshProfile" :disabled="authStore.profileLoading">
-              <span v-if="authStore.profileLoading" class="btn-spinner"></span>
-              <i v-else class="bi bi-arrow-clockwise btn-icon"></i>
-              <span>{{ authStore.profileLoading ? 'Syncing...' : 'Sync Profile' }}</span>
-            </button>
           </div>
         </div>
       </section>
@@ -280,33 +251,78 @@
       </div>
     </div>
 
-    <!-- Base Modal for Avatar Preview & Upload -->
-    <BaseModal v-model="showPreviewModal" title="Avatar Upload Preview"
-      subtitle="Inspect your new profile photo before saving" size="md" @close="cancelPreview">
-      <div v-if="selectedFile && previewUrl" class="modal-preview-content">
-        <div class="modal-preview-image-box">
-          <img :src="previewUrl" alt="Avatar preview" class="modal-preview-img" />
+    <!-- ── Crop Modal (Steps 2 & 3) ── -->
+    <BaseModal
+      v-model="showCropModal"
+      :title="croppingConfirmed ? 'Confirm Upload' : 'Crop Your Photo'"
+      :subtitle="croppingConfirmed ? 'This cropped photo will be set as your profile picture' : 'Drag to reposition · Scroll to zoom · Drag corners to resize'"
+      size="md"
+      @close="cancelCrop"
+    >
+      <!-- Step 2: Cropper -->
+      <div v-if="!croppingConfirmed" class="crop-modal-body">
+        <div class="crop-step-badge">
+          <span class="crop-step-num">2</span>
+          <span>Adjust your photo</span>
         </div>
+        <div class="cropper-wrap">
+          <Cropper
+            ref="cropperRef"
+            :src="previewUrl"
+            :stencil-props="{
+              aspectRatio: 1,
+              movable: true,
+              resizable: true,
+              handlers: {},
+              lines: {},
+            }"
+            :stencil-component="CircleStencil"
+            background-class="cropper-bg"
+            class="profile-cropper"
+          />
+        </div>
+        <p class="crop-tip">
+          <i class="bi bi-info-circle"></i>
+          Drag to reposition &bull; Scroll to zoom in/out
+        </p>
+      </div>
 
-        <div class="modal-file-details">
-          <div class="detail-badge font-mono">POST /auth/avatar</div>
-          <h4 class="modal-file-name">{{ selectedFile.name }}</h4>
-          <span class="modal-file-meta">{{ formatFileSize(selectedFile.size) }} • {{ selectedFile.type || 'image'
-          }}</span>
+      <!-- Step 3: Preview cropped result -->
+      <div v-else class="crop-confirm-body">
+        <div class="crop-step-badge step-confirm">
+          <span class="crop-step-num">3</span>
+          <span>Looks good?</span>
         </div>
+        <div class="crop-result-wrap">
+          <img :src="croppedPreviewUrl" alt="Cropped preview" class="crop-result-img" />
+        </div>
+        <p class="crop-confirm-hint">This is exactly what will be uploaded as your profile picture.</p>
       </div>
 
       <template #footer>
-        <button class="modal-btn cancel" @click="cancelPreview" :disabled="uploadingAvatar">
-          Cancel
-        </button>
-        <button class="modal-btn confirm" @click="confirmUploadAvatar" :disabled="uploadingAvatar">
-          <span v-if="uploadingAvatar" class="btn-spinner"></span>
-          <i v-else class="bi bi-cloud-arrow-up-fill btn-icon"></i>
-          <span>{{ uploadingAvatar ? 'Uploading...' : 'Confirm & Upload' }}</span>
-        </button>
+        <!-- Step 2 footer -->
+        <template v-if="!croppingConfirmed">
+          <button class="modal-btn cancel" @click="cancelCrop">Cancel</button>
+          <button class="modal-btn confirm" @click="confirmCrop">
+            <i class="bi bi-crop btn-icon"></i>
+            Confirm Crop
+          </button>
+        </template>
+        <!-- Step 3 footer -->
+        <template v-else>
+          <button class="modal-btn cancel" @click="croppingConfirmed = false" :disabled="uploadingAvatar">
+            <i class="bi bi-arrow-left btn-icon"></i>
+            Re-crop
+          </button>
+          <button class="modal-btn confirm" @click="confirmUploadAvatar" :disabled="uploadingAvatar">
+            <span v-if="uploadingAvatar" class="btn-spinner"></span>
+            <i v-else class="bi bi-cloud-arrow-up-fill btn-icon"></i>
+            <span>{{ uploadingAvatar ? 'Uploading...' : 'Upload Photo' }}</span>
+          </button>
+        </template>
       </template>
     </BaseModal>
+
 
     <!-- Base Modal for Viewing Full Profile Picture -->
     <BaseModal v-model="showViewAvatarModal" :title="authStore.userName" subtitle="Current Profile Picture" size="md">
@@ -441,6 +457,8 @@ import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import { formatDate } from '@/utils';
 import BaseModal from '@/components/BaseModal.vue';
+import { Cropper, CircleStencil } from 'vue-advanced-cropper';
+import 'vue-advanced-cropper/dist/style.css';
 
 const authStore = useAuthStore();
 const toast = useToast();
@@ -448,12 +466,17 @@ const toast = useToast();
 const fileInput = ref(null);
 const selectedFile = ref(null);
 const previewUrl = ref(null);
+const showCropModal = ref(false);
 const showPreviewModal = ref(false);
 const showViewAvatarModal = ref(false);
 const uploadingAvatar = ref(false);
 const deletingAvatar = ref(false);
 const avatarLoadFailed = ref(false);
 const avatarVersion = ref(Date.now());
+const cropperRef = ref(null);
+const croppingConfirmed = ref(false);
+const croppedPreviewUrl = ref(null);
+const croppedBlob = ref(null);
 
 const userInitials = computed(() => {
   const name = authStore.user?.name || authStore.user?.email || 'AD';
@@ -516,28 +539,69 @@ const onFileSelected = (event) => {
 
   selectedFile.value = file;
   previewUrl.value = URL.createObjectURL(file);
-  showPreviewModal.value = true;
+  croppingConfirmed.value = false;
+  croppedPreviewUrl.value = null;
+  croppedBlob.value = null;
+  // Step 2: open crop modal
+  showCropModal.value = true;
+};
+
+// Step 3: user clicks "Confirm Crop" — extract canvas, convert to Blob, show preview
+const confirmCrop = () => {
+  if (!cropperRef.value) return;
+  const { canvas } = cropperRef.value.getResult();
+  if (!canvas) return;
+  canvas.toBlob(
+    (blob) => {
+      if (!blob) return;
+      croppedBlob.value = blob;
+      if (croppedPreviewUrl.value) URL.revokeObjectURL(croppedPreviewUrl.value);
+      croppedPreviewUrl.value = URL.createObjectURL(blob);
+      croppingConfirmed.value = true;
+    },
+    'image/jpeg',
+    0.92,
+  );
+};
+
+const cancelCrop = () => {
+  showCropModal.value = false;
+  croppingConfirmed.value = false;
+  croppedBlob.value = null;
+  if (croppedPreviewUrl.value) URL.revokeObjectURL(croppedPreviewUrl.value);
+  croppedPreviewUrl.value = null;
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+  previewUrl.value = null;
+  selectedFile.value = null;
+  if (fileInput.value) fileInput.value.value = '';
 };
 
 const cancelPreview = () => {
-  if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value);
-  }
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+  if (croppedPreviewUrl.value) URL.revokeObjectURL(croppedPreviewUrl.value);
   selectedFile.value = null;
   previewUrl.value = null;
+  croppedBlob.value = null;
+  croppedPreviewUrl.value = null;
+  croppingConfirmed.value = false;
   showPreviewModal.value = false;
-  if (fileInput.value) {
-    fileInput.value.value = '';
-  }
+  showCropModal.value = false;
+  if (fileInput.value) fileInput.value.value = '';
 };
 
+// Step 4: upload cropped image blob to backend
 const confirmUploadAvatar = async () => {
-  if (!selectedFile.value) return;
+  const blobToUpload = croppedBlob.value;
+  if (!blobToUpload) return;
+
+  // Convert Blob to File so authStore.uploadAvatar can append it as FormData
+  const ext = 'jpg';
+  const fileName = `avatar_${Date.now()}.${ext}`;
+  const file = new File([blobToUpload], fileName, { type: 'image/jpeg' });
 
   uploadingAvatar.value = true;
   try {
-    // Sends FormData containing ONLY 'avatar' field to POST /auth/avatar
-    await authStore.uploadAvatar(selectedFile.value);
+    await authStore.uploadAvatar(file);
     toast.success('Avatar picture updated successfully!', 'Upload Complete');
     cancelPreview();
     avatarLoadFailed.value = false;
@@ -811,31 +875,12 @@ onMounted(async () => {
   position: relative;
   width: 104px;
   height: 104px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 3px solid rgba(56, 189, 248, 0.35);
-  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.35);
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
-}
-
-.avatar-frame:hover {
-  transform: scale(1.03);
-  box-shadow: 0 12px 30px rgba(14, 165, 233, 0.5);
-}
-
-.avatar-frame.is-admin {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  border-color: rgba(245, 158, 11, 0.5);
-  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.35);
-}
-
-.avatar-frame.is-admin:hover {
-  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.5);
 }
 
 .avatar-img {
@@ -869,30 +914,8 @@ onMounted(async () => {
   transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.avatar-frame:hover .avatar-edit-overlay {
-  opacity: 1;
-}
-
 .camera-icon {
   font-size: 1.2rem;
-}
-
-.verified-badge-icon {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  width: 26px;
-  height: 26px;
-  background: #10b981;
-  color: white;
-  border: 3px solid #0f172a;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
-  z-index: 3;
-  font-size: 0.7rem;
 }
 
 .user-meta {
@@ -1783,5 +1806,120 @@ onMounted(async () => {
 
 .callout-action-btn.btn-danger-outline:hover {
   background: rgba(248, 113, 113, 0.22);
+}
+
+/* ── Crop Modal ─────────────────────────────────── */
+.crop-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.crop-step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(14, 165, 233, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 9999px;
+  padding: 0.22rem 0.7rem 0.22rem 0.3rem;
+  width: fit-content;
+}
+
+.crop-step-badge.step-confirm {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(52, 211, 153, 0.25);
+}
+
+.crop-step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.crop-step-badge.step-confirm .crop-step-num {
+  background: #10b981;
+}
+
+.cropper-wrap {
+  width: 100%;
+  height: 320px;
+  background: #0b0f18;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.profile-cropper {
+  width: 100%;
+  height: 100%;
+}
+
+:deep(.cropper-bg) {
+  background: #0b0f18;
+}
+
+:deep(.vue-advanced-cropper__background) {
+  background: #0b0f18;
+}
+
+:deep(.vue-advanced-cropper__foreground) {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+:deep(.vue-circle-stencil__overlay) {
+  border: 2.5px solid #38bdf8;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+}
+
+.crop-tip {
+  font-size: 0.78rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+/* Step 3 confirm body */
+.crop-confirm-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.crop-result-wrap {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 28px rgba(14, 165, 233, 0.25);
+}
+
+.crop-result-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.crop-confirm-hint {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-align: center;
+  margin: 0;
 }
 </style>

@@ -51,9 +51,14 @@ export const authService = {
     return api.post(API_ENDPOINTS.AUTH.TWO_FA_SETUP);
   },
 
-  // POST /auth/2fa/verify  body: { token } — verifies TOTP code to enable 2FA
+  // POST /auth/2fa/verify  body: { token } — verifies TOTP code to enable 2FA (profile setup)
   verify2FA(token) {
     return api.post(API_ENDPOINTS.AUTH.TWO_FA_VERIFY, { token });
+  },
+
+  // POST /auth/2fa/verify  body: { tempToken, code } — completes login when 2FA is required
+  verifyLoginTOTP(tempToken, code) {
+    return api.post(API_ENDPOINTS.AUTH.TWO_FA_LOGIN_VERIFY, { tempToken, code });
   },
 
   // POST /auth/2fa/disable  body: { token } — disables 2FA with current TOTP code

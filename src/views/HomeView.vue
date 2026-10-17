@@ -173,9 +173,24 @@
               </div>
 
               <div class="bike-specs-grid">
-                <div class="bike-spec-item">
+                <div class="bike-spec-item" v-if="product.year || product.engince || product.engine">
+                  <span class="spec-k">Engine / Year</span>
+                  <span class="spec-v">{{ (product.engince || product.engine) ? `${product.engince || product.engine}cc` : '' }} {{ product.year ? `· ${product.year}` : '' }}</span>
+                </div>
+                <div class="bike-spec-item" v-else>
+                  <span class="spec-k">Model</span>
+                  <span class="spec-v">BigBike</span>
+                </div>
+                <div class="bike-spec-item" v-if="product.color">
+                  <span class="spec-k">Color</span>
+                  <span class="spec-v color-spec-item">
+                    <span class="color-dot-sm" :style="{ backgroundColor: product.color }"></span>
+                    {{ product.color }}
+                  </span>
+                </div>
+                <div class="bike-spec-item" v-else>
                   <span class="spec-k">Description</span>
-                  <span class="spec-v">{{ product.description || 'Premium motorcycle' }}</span>
+                  <span class="spec-v">{{ product.description || 'Exclusive' }}</span>
                 </div>
                 <div class="bike-spec-item">
                   <span class="spec-k">Stock</span>
@@ -1172,6 +1187,21 @@ const fetchProducts = async () => {
 .spec-k { color: #64748b; }
 .spec-v { color: #cbd5e1; font-weight: 600; }
 .spec-v.highlight { color: #38bdf8; font-weight: 700; }
+
+.color-spec-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-transform: capitalize;
+}
+
+.color-dot-sm {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
 
 .bike-card-footer {
   margin-top: auto;
