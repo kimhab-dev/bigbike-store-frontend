@@ -42,6 +42,10 @@ export const API_ENDPOINTS = {
     LIST: '/users',
     DETAIL: (userId) => `/users/${userId}`,
   },
+  CATEGORIES: {
+    LIST: '/categories',
+    DETAIL: (categoryId) => `/categories/${categoryId}`,
+  },
 };
 
 export const USER_ROLES = {

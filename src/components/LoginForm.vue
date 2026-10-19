@@ -4,12 +4,8 @@
     <div class="auth-header">
       <transition name="header-fade" mode="out-in">
         <div v-if="activeTab === 'login'" key="login-header">
-          <div class="brand-pill">
-            <span class="pulse-dot"></span>
-            <span>MEMBER ACCESS</span>
-          </div>
-          <h2 class="form-title">Welcome Back, Rider</h2>
-          <p class="form-subtitle">Access your garage, orders &amp; telemetry</p>
+          <h2 class="form-title">Welcome back</h2>
+          <p class="form-subtitle">Sign in to see your garage and orders</p>
         </div>
         <div v-else-if="activeTab === 'totp'" key="totp-header">
           <div class="brand-pill totp-pill">
@@ -171,22 +167,24 @@
 
         <!-- Google OAuth Button -->
         <button type="button" class="google-oauth-btn" @click="handleGoogleLogin">
-          <i class="fa fa-google google-icon"></i>
+          <svg class="google-icon-svg" viewBox="0 0 24 24" width="18" height="18">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
           <span>Continue with Google</span>
         </button>
 
         <div class="auth-divider">
-          <span>or continue with email</span>
+          <span>or sign in with email</span>
         </div>
 
         <!-- Email -->
         <div class="form-group">
-          <label for="login-email">Email Address</label>
+          <label for="login-email">Email</label>
           <div class="input-group" :class="{ 'is-error': lt.email && le.email, 'is-valid': lt.email && !le.email && lf.email }">
-            <span class="input-icon">
-              <i class="fa fa-envelope"></i>
-            </span>
-            <input id="login-email" v-model="lf.email" type="email" placeholder="rider@example.com"
+            <input id="login-email" v-model="lf.email" type="email" placeholder="you@example.com"
               :disabled="loading" autocomplete="email"
               @blur="lTouch('email')" @input="lt.email && lValidateField('email')" />
           </div>
@@ -205,15 +203,12 @@
             <a href="#forgot" class="forgot-link" @click.prevent="showForgotNotice">Forgot password?</a>
           </div>
           <div class="input-group" :class="{ 'is-error': lt.password && le.password, 'is-valid': lt.password && !le.password && lf.password }">
-            <span class="input-icon">
-              <i class="fa fa-lock"></i>
-            </span>
             <input id="login-password" v-model="lf.password" :type="showLoginPw ? 'text' : 'password'"
               placeholder="Enter your password" :disabled="loading"
               autocomplete="current-password"
               @blur="lTouch('password')" @input="lt.password && lValidateField('password')" />
             <button type="button" class="visibility-btn" @click="showLoginPw = !showLoginPw" tabindex="-1">
-              <i :class="showLoginPw ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+              {{ showLoginPw ? 'Hide' : 'Show' }}
             </button>
           </div>
           <transition name="fade-slide">
@@ -229,32 +224,35 @@
           <label class="remember-label">
             <input type="checkbox" v-model="rememberMe" />
             <span class="custom-checkbox"></span>
-            <span>Remember this session</span>
+            <span>Keep me signed in on this device</span>
           </label>
         </div>
 
         <!-- Submit -->
         <button type="submit" class="submit-btn" :disabled="loading">
           <span v-if="loading" class="spinner-container">
-            <span class="spinner"></span><span>Authenticating...</span>
+            <span class="spinner"></span><span>Signing in...</span>
           </span>
-          <span v-else class="btn-text-wrapper">
-            <span>Authorize &amp; Enter Garage</span>
-            <i class="fa fa-arrow-right arrow-icon"></i>
+          <span v-else>
+            Sign in
           </span>
         </button>
 
         <p class="switch-hint">
-          Don't have an account?
-          <router-link to="/register" class="switch-link">Create one free →</router-link>
+          New to BigBike?
+          <router-link to="/register" class="switch-link">Create an account</router-link>
         </p>
+
+        <div class="auth-security-footer">
+          <span>Secure sign-in · Your details are encrypted</span>
+        </div>
       </form>
     </transition>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue';
+import { reactive, ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
@@ -290,8 +288,40 @@ const cancelTOTP = () => {
   pendingTempToken.value = '';
   pendingQrCode.value = '';
   showQrCode.value = false;
+  sessionStorage.removeItem('pending_2fa');
   activeTab.value = 'login';
 };
+
+onMounted(() => {
+  // Check if redirected from OAuth with pending 2FA in sessionStorage
+  const pending2FAStr = sessionStorage.getItem('pending_2fa');
+  if (pending2FAStr) {
+    try {
+      const parsed = JSON.parse(pending2FAStr);
+      if (parsed.tempToken) {
+        pendingTempToken.value = parsed.tempToken;
+        pendingQrCode.value = parsed.qrCode || '';
+        showQrCode.value = !!parsed.qrCode;
+        totpCode.value = '';
+        totpError.value = '';
+        activeTab.value = 'totp';
+        toast.info(
+          'Two-Factor Authentication is required for your admin account. Please enter your code.',
+          'Admin 2FA Required'
+        );
+      }
+    } catch (e) {
+      console.warn('Failed to parse pending 2FA:', e);
+    }
+  } else if (route.query.tempToken) {
+    pendingTempToken.value = route.query.tempToken;
+    pendingQrCode.value = route.query.qrCode || '';
+    showQrCode.value = !!route.query.qrCode;
+    totpCode.value = '';
+    totpError.value = '';
+    activeTab.value = 'totp';
+  }
+});
 
 const handleTOTPVerify = async () => {
   if (totpCode.value.length !== 6) {
@@ -302,6 +332,7 @@ const handleTOTPVerify = async () => {
   totpError.value = '';
   try {
     await authStore.verifyLoginTOTP(pendingTempToken.value, totpCode.value);
+    sessionStorage.removeItem('pending_2fa');
     toast.success('Access authorized! Welcome back to BigBike Store.', 'Login Successful');
     emit('success');
     setTimeout(() => {
@@ -836,17 +867,18 @@ const handleLogin = async () => {
 }
 
 .form-title {
-  font-size: 1.75rem;
+  font-size: 1.85rem;
   font-weight: 700;
-  color: #f8fafc;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.3rem;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.35rem;
 }
 
 .form-subtitle {
-  font-size: 0.875rem;
-  color: #94a3b8;
+  font-size: 0.88rem;
+  color: #8c9cb0;
   line-height: 1.45;
+  margin-bottom: 0.5rem;
 }
 
 /* ── Header Transitions ───────────────────────── */
@@ -862,27 +894,26 @@ const handleLogin = async () => {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  background: #0f182c;
+  border: 1px solid #1e2c47;
   color: #f8fafc;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
+  padding: 0.68rem 1rem;
+  border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.16s ease;
+  margin-top: 0.5rem;
 }
 
 .google-oauth-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: #17243e;
+  border-color: #2b3d63;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.google-icon {
+.google-icon-svg {
   width: 1.15rem;
   height: 1.15rem;
   flex-shrink: 0;
@@ -892,23 +923,21 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   text-align: center;
-  margin: -0.2rem 0;
+  margin: 1.25rem 0;
 }
 
 .auth-divider::before,
 .auth-divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid #1a2844;
 }
 
 .auth-divider span {
-  padding: 0 0.75rem;
+  padding: 0 0.85rem;
   color: #64748b;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 400;
 }
 
 /* ── Form Transitions ─────────────────────────── */
@@ -948,36 +977,29 @@ label {
   position: relative;
   display: flex;
   align-items: center;
-  background: rgba(11, 15, 25, 0.8);
-  border: 1.5px solid #1e293b;
-  border-radius: 10px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  background: #0b1325;
+  border: 1px solid #1a2844;
+  border-radius: 8px;
+  transition: all 0.16s ease;
 }
 
 .input-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
+  width: 2.2rem;
   color: #64748b;
   padding-left: 0.75rem;
   flex-shrink: 0;
-  transition: color 0.2s;
-}
-
-.input-icon svg {
-  width: 1.1rem;
-  height: 1.1rem;
 }
 
 .input-group input {
   flex: 1;
-  padding: 0.8rem 0.75rem 0.8rem 0.4rem;
+  padding: 0.7rem 0.85rem;
   background: transparent;
   border: none;
   color: #f8fafc;
-  font-size: 0.93rem;
+  font-size: 0.9rem;
   font-family: inherit;
   outline: none;
   min-width: 0;
@@ -986,36 +1008,33 @@ label {
 .input-group input::placeholder { color: #475569; }
 
 .input-group:focus-within {
-  border-color: #38bdf8;
-  background: rgba(15, 23, 42, 0.9);
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
-
-.input-group:focus-within .input-icon { color: #38bdf8; }
 
 .input-group.is-error {
-  border-color: #f43f5e;
-  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18);
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
-
-.input-group.is-error .input-icon { color: #f43f5e; }
 
 .input-group.is-valid { border-color: #10b981; }
 
 .visibility-btn {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: #8c9cb0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.85rem;
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  transition: color 0.2s;
+  transition: color 0.16s ease;
 }
 
-.visibility-btn svg { width: 1.15rem; height: 1.15rem; }
-.visibility-btn:hover { color: #cbd5e1; }
+.visibility-btn:hover { color: #f8fafc; }
 
 /* ── Strength Bar ─────────────────────────────── */
 .strength-bar-wrap {
@@ -1149,18 +1168,22 @@ label {
 .custom-checkbox {
   width: 16px;
   height: 16px;
-  border: 1.5px solid #475569;
+  border: 1.5px solid #2a3a5a;
   border-radius: 4px;
-  background: rgba(15, 23, 42, 0.8);
+  background: #0b1325;
   display: inline-block;
   position: relative;
-  transition: all 0.2s;
+  transition: all 0.16s ease;
   flex-shrink: 0;
 }
 
+.remember-label:hover .custom-checkbox {
+  border-color: #3b82f6;
+}
+
 .remember-label input:checked + .custom-checkbox {
-  background: #0ea5e9;
-  border-color: #0ea5e9;
+  background: #3b82f6;
+  border-color: #3b82f6;
 }
 
 .remember-label input:checked + .custom-checkbox::after {
@@ -1170,51 +1193,52 @@ label {
   top: 1.5px;
   width: 4px;
   height: 8px;
-  border: solid white;
+  border: solid #000000;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
 
 .forgot-link {
-  color: #38bdf8;
+  color: #3b82f6;
   text-decoration: none;
   font-weight: 500;
-  font-size: 0.8rem;
-  transition: color 0.2s;
+  font-size: 0.82rem;
+  transition: color 0.16s ease;
 }
-.forgot-link:hover { color: #7dd3fc; text-decoration: underline; }
+.forgot-link:hover { color: #60a5fa; text-decoration: underline; }
 
 /* ── Submit Button ────────────────────────────── */
 .submit-btn {
   width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.9rem 1.25rem;
-  background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%);
-  background-size: 200% auto;
-  color: #ffffff;
+  margin-top: 0.35rem;
+  padding: 0.76rem 1.25rem;
+  background: #3b82f6;
+  color: #0b1325;
   border: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 8px 20px -4px rgba(14, 165, 233, 0.5), inset 0 1px 0 rgba(255,255,255,0.15);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.16s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
 .submit-btn.register-btn {
-  background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
-  box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+  background: #10b981;
+  color: #041f14;
 }
 
 .submit-btn:hover:not(:disabled) {
-  background-position: right center;
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px -4px rgba(14, 165, 233, 0.6), 0 0 12px rgba(56, 189, 248, 0.25);
+  background: #2563eb;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
 }
 
 .submit-btn.register-btn:hover:not(:disabled) {
-  box-shadow: 0 12px 24px -4px rgba(16, 185, 129, 0.5);
+  background: #059669;
+  color: #ffffff;
 }
 
 .submit-btn:active:not(:disabled) {
@@ -1241,8 +1265,8 @@ label {
 .spinner {
   width: 17px;
   height: 17px;
-  border: 2.5px solid rgba(255,255,255,0.3);
-  border-top-color: #ffffff;
+  border: 2.5px solid rgba(11, 19, 37, 0.3);
+  border-top-color: #0b1325;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -1252,9 +1276,9 @@ label {
 /* ── Switch Hint ──────────────────────────────── */
 .switch-hint {
   text-align: center;
-  font-size: 0.82rem;
-  color: #64748b;
-  margin-top: 0.1rem;
+  font-size: 0.84rem;
+  color: #8c9cb0;
+  margin-top: 0.5rem;
 }
 
 .switch-link {
@@ -1262,13 +1286,22 @@ label {
   border: none;
   font-family: inherit;
   font-size: inherit;
-  color: #38bdf8;
+  color: #3b82f6;
   cursor: pointer;
   padding: 0;
-  font-weight: 600;
-  transition: color 0.2s;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.16s ease;
 }
-.switch-link:hover { color: #7dd3fc; }
+.switch-link:hover { color: #60a5fa; text-decoration: underline; }
+
+.auth-security-footer {
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  letter-spacing: -0.01em;
+}
 
 /* ── Terms Notice ─────────────────────────────── */
 .terms-notice {

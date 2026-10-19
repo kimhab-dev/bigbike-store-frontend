@@ -1,44 +1,85 @@
 <template>
-  <div class="login-page" :style="{ backgroundImage: `url(${authBg})` }">
-    <!-- Dark Atmospheric Overlay -->
-    <div class="bg-overlay"></div>
-
-    <!-- Ambient Glow Accents -->
-    <div class="glow-orb glow-top"></div>
-    <div class="glow-orb glow-bottom"></div>
-
-    <!-- Centered Form Container -->
-    <main class="login-center-wrapper">
-      <div class="login-card-container">
-        <!-- Brand Logo Header -->
-        <div class="login-brand-header">
-          <router-link to="/" class="brand-logo-link" title="BigBike Store Home">
-            <img :src="logoImg" alt="BigBike Store" class="brand-logo-img" />
-          </router-link>
-        </div>
-
-        <!-- Centered Glass Form Card -->
-        <div class="glass-form-card">
-          <LoginForm />
-        </div>
-
-        <!-- Bottom Security / Copyright Note -->
-        <div class="login-footer-info">
-          <div class="security-badge">
-            <i class="bi bi-shield-check"></i>
+  <div class="login-split-page">
+    <!-- Left Hero Column (Matches Reference Image) -->
+    <div class="auth-hero-panel">
+      <!-- Top Brand Logo -->
+      <div class="hero-brand">
+        <router-link to="/" class="brand-link" title="BigBike Store Home">
+          <div class="brand-icon-box">
+            <i class="fa fa-motorcycle"></i>
           </div>
-          <span class="copyright-text">&copy; {{ new Date().getFullYear() }} BigBike Store. All rights reserved.</span>
+          <span class="brand-title">BigBike</span>
+        </router-link>
+      </div>
+
+      <!-- Center Content: Headline, Subtitle & Superbike Vector -->
+      <div class="hero-content">
+        <div class="hero-text-block">
+          <h1 class="hero-headline">Your garage is open.</h1>
+          <p class="hero-subtext">Check your orders, manage your bikes and book service, all in one place.</p>
+        </div>
+
+        <!-- Sleek Minimalist Wireframe Superbike Vector -->
+        <div class="hero-illustration">
+          <svg class="bike-wireframe-svg" viewBox="0 0 540 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Rear Wheel & Hub -->
+            <circle cx="110" cy="210" r="58" stroke="#2563eb" stroke-width="2.6" />
+            <circle cx="110" cy="210" r="14" stroke="#2563eb" stroke-width="2.2" />
+
+            <!-- Front Wheel & Hub -->
+            <circle cx="430" cy="210" r="58" stroke="#2563eb" stroke-width="2.6" />
+            <circle cx="430" cy="210" r="14" stroke="#2563eb" stroke-width="2.2" />
+
+            <!-- Swingarm & Lower Drive -->
+            <path d="M110 210 L230 208 L260 150" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M110 210 L195 150" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+
+            <!-- Main Chassis / Perimeter Truss Frame -->
+            <path d="M195 150 L260 150 L315 208 L375 208" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M230 208 L300 208 L345 150" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+
+            <!-- Tank, Seat & Tail Geometry -->
+            <path d="M160 120 L230 150 L295 150 L330 95 L375 90 L345 150 L390 210" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M160 120 L220 120 L275 150" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+
+            <!-- Front Telescopic Fork & Clip-on Handlebar -->
+            <path d="M375 90 L430 210" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M330 95 L375 90" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+
+            <!-- Aerodynamic Tail Support Strut -->
+            <path d="M190 185 L160 120" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
         </div>
       </div>
-    </main>
+
+      <!-- Bottom Copyright -->
+      <div class="hero-footer">
+        <span>&copy; {{ new Date().getFullYear() }} BigBike Store</span>
+      </div>
+    </div>
+
+    <!-- Right Form Column -->
+    <div class="auth-form-panel">
+      <!-- Mobile Logo Header (visible on small screens only) -->
+      <div class="mobile-brand-header">
+        <router-link to="/" class="brand-link" title="BigBike Store Home">
+          <div class="brand-icon-box">
+            <i class="fa fa-motorcycle"></i>
+          </div>
+          <span class="brand-title">BigBike</span>
+        </router-link>
+      </div>
+
+      <div class="auth-form-card">
+        <LoginForm />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
 import LoginForm from '@/components/LoginForm.vue';
-import authBg from '@/assets/image/bg/auth-bg.png';
-import logoImg from '@/assets/image/logo/logo.png';
 
 onMounted(() => {
   document.body.style.overflow = 'hidden';
@@ -50,224 +91,163 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.login-page {
-  position: relative;
-  height: 100vh;
-  max-height: 100vh;
-  width: 100vw;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+.login-split-page {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  background: #080d19;
   color: #f8fafc;
   overflow: hidden;
 }
 
-/* Atmospheric Overlay with Soft Blur */
-.bg-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(7, 10, 19, 0.88) 0%,
-    rgba(15, 23, 42, 0.82) 50%,
-    rgba(7, 10, 19, 0.92) 100%
-  );
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 1;
-}
-
-/* Ambient Glowing Orbs */
-.glow-orb {
-  position: absolute;
-  width: 550px;
-  height: 550px;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(140px);
-  opacity: 0.18;
-  z-index: 2;
-}
-
-.glow-top {
-  top: -150px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: radial-gradient(circle, #0ea5e9 0%, #38bdf8 40%, transparent 70%);
-}
-
-.glow-bottom {
-  bottom: -150px;
-  right: 15%;
-  background: radial-gradient(circle, #6366f1 0%, #0ea5e9 40%, transparent 70%);
-}
-
-/* Top Navigation Bar */
-.login-top-bar {
-  position: relative;
-  z-index: 10;
-  padding: 1.5rem 2rem 0.5rem 2rem;
+/* ── 1. LEFT HERO PANEL ────────────────────────────────────── */
+.auth-hero-panel {
+  flex: 1.1;
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #94a3b8;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 9999px;
-  backdrop-filter: blur(10px);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.back-link i {
-  font-size: 1rem;
-  transition: transform 0.2s ease;
-}
-
-.back-link:hover {
-  color: #ffffff;
-  background: rgba(14, 165, 233, 0.15);
-  border-color: rgba(56, 189, 248, 0.35);
-  transform: translateX(-2px);
-}
-
-.back-link:hover i {
-  transform: translateX(-3px);
-}
-
-/* Center Content Area */
-.login-center-wrapper {
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem 4rem;
+  background: #060a14;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
-  z-index: 10;
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
   overflow: hidden;
 }
 
-.login-card-container {
-  width: 100%;
-  max-width: 460px;
+.hero-brand {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
 }
 
-/* Logo Header */
-.login-brand-header {
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+}
+
+.brand-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #2563eb;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #ffffff;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
-.brand-logo-link {
-  display: inline-block;
-  transition: transform 0.25s ease;
+.brand-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
 }
 
-.brand-logo-link:hover {
-  transform: scale(1.04);
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: auto 0;
+  padding: 1.5rem 0;
 }
 
-.brand-logo-img {
-  height: 42px;
-  width: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(14, 165, 233, 0.3));
+.hero-text-block {
+  margin-bottom: 2.5rem;
 }
 
-/* Centered Glass Form Card */
-.glass-form-card {
+.hero-headline {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0 0 0.85rem 0;
+}
+
+.hero-subtext {
+  font-size: 1rem;
+  color: #8c9cb0;
+  line-height: 1.55;
+  max-width: 440px;
+  margin: 0;
+}
+
+.hero-illustration {
   width: 100%;
-  background: rgba(15, 23, 42, 0.78);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(56, 189, 248, 0.22);
-  border-radius: 20px;
-  padding: 1.65rem 1.75rem;
-  box-shadow:
-    0 25px 60px -15px rgba(0, 0, 0, 0.85),
-    0 0 35px rgba(14, 165, 233, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  max-width: 520px;
+  opacity: 0.95;
 }
 
-.glass-form-card:hover {
-  border-color: rgba(56, 189, 248, 0.32);
-  box-shadow:
-    0 30px 70px -15px rgba(0, 0, 0, 0.9),
-    0 0 45px rgba(14, 165, 233, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+.bike-wireframe-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 0 16px rgba(37, 99, 235, 0.25));
 }
 
-/* Footer / Security info */
-.login-footer-info {
+.hero-footer {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ── 2. RIGHT FORM PANEL ───────────────────────────────────── */
+.auth-form-panel {
+  flex: 0.95;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  text-align: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  background: #080d19;
+  overflow-y: auto;
+  position: relative;
 }
 
-.security-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  color: #38bdf8;
-  background: rgba(14, 165, 233, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  letter-spacing: 0.02em;
+.mobile-brand-header {
+  display: none;
+  margin-bottom: 2rem;
 }
 
-.security-badge i {
-  font-size: 0.9rem;
+.auth-form-card {
+  width: 100%;
+  max-width: 410px;
 }
 
-.copyright-text {
-  font-size: 0.78rem;
-  color: #64748b;
+/* ── RESPONSIVE DESIGN ─────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .auth-hero-panel {
+    padding: 2.5rem 2rem;
+  }
+  .hero-headline {
+    font-size: 2.4rem;
+  }
 }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .login-top-bar {
-    padding: 1rem 1rem 0 1rem;
+@media (max-width: 860px) {
+  .login-split-page {
+    flex-direction: column;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
   }
 
-  .login-center-wrapper {
-    padding: 1rem 1rem 2rem 1rem;
+  .auth-hero-panel {
+    display: none;
   }
 
-  .glass-form-card {
-    padding: 1.75rem 1.25rem;
-    border-radius: 20px;
+  .mobile-brand-header {
+    display: flex;
   }
 
-  .brand-logo-img {
-    height: 46px;
+  .auth-form-panel {
+    flex: 1;
+    min-height: 100vh;
+    padding: 3rem 1.5rem;
+    justify-content: center;
   }
 }
 </style>

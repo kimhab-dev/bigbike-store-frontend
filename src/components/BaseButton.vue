@@ -128,14 +128,15 @@ const handleClick = (event) => {
 </script>
 
 <style scoped>
+/* ── DESIGN SYSTEM BUTTON ─────────────────────────────────────── */
 .base-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   font-family: inherit;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.35;
   text-decoration: none;
   text-align: center;
   white-space: nowrap;
@@ -143,35 +144,37 @@ const handleClick = (event) => {
   cursor: pointer;
   user-select: none;
   border: 1px solid transparent;
-  border-radius: 0.65rem;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 8px;
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  overflow: hidden;
   outline: none;
 }
 
 .base-btn:focus-visible {
-  outline: 2px solid #38bdf8;
+  outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
 /* Sizing */
 .btn-sm {
   font-size: 0.8125rem;
-  padding: 0.4rem 0.85rem;
-  border-radius: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  gap: 0.35rem;
 }
 
 .btn-md {
-  font-size: 0.9375rem;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.65rem;
+  font-size: 0.9rem;
+  padding: 0.52rem 1.15rem;
+  border-radius: 8px;
+  gap: 0.45rem;
 }
 
 .btn-lg {
-  font-size: 1.05rem;
-  padding: 0.8rem 1.6rem;
-  border-radius: 0.8rem;
+  font-size: 1.025rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  gap: 0.6rem;
 }
 
 /* Width & Shape */
@@ -189,72 +192,131 @@ const handleClick = (event) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1em;
+  font-size: 0.95em;
+  line-height: 1;
 }
 
 .btn-label {
   display: inline-flex;
   align-items: center;
+  line-height: 1.25;
 }
 
-/* Variants */
-/* Primary */
+/* ── VARIANTS ─────────────────────────────────────────────────── */
+
+/* 1. Primary Variant — Matches user reference image (+ Add product) */
 .btn-primary {
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-  color: #ffffff;
-  border-color: rgba(56, 189, 248, 0.4);
-  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+  background: #3b82f6;
+  color: #000000;
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover:not(.is-disabled) {
-  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
-  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
+  background: #60a5fa;
+  color: #000000;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
 }
 
 .btn-primary:active:not(.is-disabled) {
+  background: #2563eb;
+  color: #000000;
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
 }
 
-/* Secondary */
+/* 2. Secondary Variant — Matches dark dashboard table buttons (e.g. Edit) */
 .btn-secondary {
-  background: rgba(30, 41, 59, 0.8);
-  color: #f1f5f9;
-  border-color: rgba(71, 85, 105, 0.6);
-  backdrop-filter: blur(8px);
+  background: #152238;
+  color: #cbd5e1;
+  border: 1px solid #233554;
+  font-weight: 500;
 }
 
 .btn-secondary:hover:not(.is-disabled) {
-  background: rgba(51, 65, 85, 0.9);
-  border-color: rgba(148, 163, 184, 0.5);
+  background: #1c2e4c;
   color: #ffffff;
+  border-color: #3b82f6;
   transform: translateY(-1px);
 }
 
 .btn-secondary:active:not(.is-disabled) {
+  background: #101a2b;
   transform: translateY(0);
 }
 
-/* Outline */
-.btn-outline {
-  background: transparent;
-  color: #38bdf8;
-  border-color: rgba(56, 189, 248, 0.4);
+/* 3. Danger Variant — Delete and destructive actions */
+.btn-danger {
+  background: #22141c;
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  font-weight: 500;
 }
 
-.btn-outline:hover:not(.is-disabled) {
-  background: rgba(14, 165, 233, 0.12);
-  border-color: #38bdf8;
+.btn-danger:hover:not(.is-disabled) {
+  background: #ef4444;
   color: #ffffff;
+  border-color: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:active:not(.is-disabled) {
+  background: #dc2626;
+  transform: translateY(0);
+}
+
+/* 4. Success Variant */
+.btn-success {
+  background: #0f281e;
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  font-weight: 500;
+}
+
+.btn-success:hover:not(.is-disabled) {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
   transform: translateY(-1px);
 }
 
-.btn-outline:active:not(.is-disabled) {
+.btn-success:active:not(.is-disabled) {
+  background: #059669;
   transform: translateY(0);
 }
 
-/* Ghost */
+/* 5. Warning Variant */
+.btn-warning {
+  background: #281d0f;
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  font-weight: 500;
+}
+
+.btn-warning:hover:not(.is-disabled) {
+  background: #f59e0b;
+  color: #000000;
+  border-color: #f59e0b;
+  transform: translateY(-1px);
+}
+
+/* 6. Outline Variant */
+.btn-outline {
+  background: transparent;
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.btn-outline:hover:not(.is-disabled) {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border-color: #60a5fa;
+  transform: translateY(-1px);
+}
+
+/* 7. Ghost Variant */
 .btn-ghost {
   background: transparent;
   color: #94a3b8;
@@ -264,48 +326,6 @@ const handleClick = (event) => {
 .btn-ghost:hover:not(.is-disabled) {
   background: rgba(255, 255, 255, 0.08);
   color: #f8fafc;
-}
-
-/* Danger */
-.btn-danger {
-  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
-  color: #ffffff;
-  border-color: rgba(244, 63, 94, 0.4);
-  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3);
-}
-
-.btn-danger:hover:not(.is-disabled) {
-  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.45);
-  transform: translateY(-1px);
-}
-
-/* Success */
-.btn-success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
-  border-color: rgba(52, 211, 153, 0.4);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-}
-
-.btn-success:hover:not(.is-disabled) {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
-  transform: translateY(-1px);
-}
-
-/* Warning */
-.btn-warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: #ffffff;
-  border-color: rgba(251, 191, 36, 0.4);
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
-}
-
-.btn-warning:hover:not(.is-disabled) {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
-  transform: translateY(-1px);
 }
 
 /* Disabled & Loading States */
@@ -325,8 +345,8 @@ const handleClick = (event) => {
 }
 
 .spinner-icon {
-  width: 1.1em;
-  height: 1.1em;
+  width: 1em;
+  height: 1em;
   animation: btn-spin 0.75s linear infinite;
 }
 

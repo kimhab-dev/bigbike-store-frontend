@@ -8,10 +8,10 @@
       <!-- Brand & Title -->
       <div class="sidebar-brand">
         <div class="brand-logo-wrap">
-          <i class="fa fa-motorcycle logo-emoji"></i>
+          <div class="brand-icon-box"><i class="fa fa-motorcycle"></i></div>
           <div class="brand-text">
-            <span class="brand-title">BigBike <span class="brand-highlight">ADMIN</span></span>
-            <span class="brand-sub">Command & Control</span>
+            <span class="brand-title">BigBike</span>
+            <span class="brand-sub">Admin portal</span>
           </div>
         </div>
         <button class="mobile-close-btn" @click="isMobileMenuOpen = false">
@@ -19,23 +19,7 @@
         </button>
       </div>
 
-      <!-- Admin Identity Card -->
-      <div class="admin-profile-card">
-        <div class="admin-avatar">
-          <img v-if="authStore.userAvatar" :src="orderAvatarUrl(authStore.userAvatar)"
-            :alt="`${authStore.userName} avatar`" @error="$event.target.style.display = 'none'" />
-          <span :class="{ 'avatar-fallback': authStore.userAvatar }">{{ userInitials(authStore.userName) }}</span>
-          <span class="online-dot"></span>
-        </div>
-        <div class="admin-details">
-          <strong class="admin-name">{{ authStore.userName }}</strong>
-          <span class="admin-email">{{ authStore.userEmail }}</span>
-          <span class="admin-role-pill">SYSTEM ADMIN</span>
-        </div>
-      </div>
-
       <!-- Navigation Menu -->
-      <div class="nav-section-title">MANAGEMENT MODULES</div>
       <nav class="sidebar-nav">
         <button class="nav-item" :class="{ active: activeTab === 'products' }" @click="selectTab('products')">
           <div class="nav-item-left">
@@ -53,6 +37,14 @@
           <span class="nav-count amber-count">{{ orders.length }}</span>
         </button>
 
+        <button class="nav-item" :class="{ active: activeTab === 'categories' }" @click="selectTab('categories')">
+          <div class="nav-item-left">
+            <i class="bi bi-tags nav-icon"></i>
+            <span class="nav-label">Categories</span>
+          </div>
+          <span class="nav-count purple-count">{{ categories.length }}</span>
+        </button>
+
         <button class="nav-item" :class="{ active: activeTab === 'users' }" @click="selectTab('users')">
           <div class="nav-item-left">
             <i class="bi bi-people nav-icon"></i>
@@ -62,22 +54,22 @@
         </button>
       </nav>
 
-      <!-- Sidebar Footer Actions -->
+      <!-- Sidebar Footer – User Info -->
       <div class="sidebar-footer">
-        <router-link to="/profile" class="footer-action-btn">
-          <i class="bi bi-person-circle f-icon"></i>
-          <span>Admin Profile</span>
-        </router-link>
-
-        <button class="footer-action-btn sync-btn" @click="refreshAllModules" :disabled="isRefreshing">
-          <i class="bi bi-arrow-clockwise f-icon" :class="{ 'spin-anim': isRefreshing }"></i>
-          <span>{{ isRefreshing ? 'Syncing...' : 'Sync All Data' }}</span>
-        </button>
-
-        <button class="footer-action-btn logout-btn" @click="handleLogout">
-          <i class="bi bi-box-arrow-right f-icon"></i>
-          <span>Sign Out</span>
-        </button>
+        <div class="sidebar-user-row">
+          <div class="sidebar-user-avatar">
+            <img v-if="authStore.userAvatar" :src="orderAvatarUrl(authStore.userAvatar)"
+              :alt="`${authStore.userName} avatar`" @error="$event.target.style.display = 'none'" />
+            <span :class="{ 'avatar-fallback': authStore.userAvatar }">{{ userInitials(authStore.userName) }}</span>
+          </div>
+          <div class="sidebar-user-details">
+            <span class="sidebar-user-name">{{ authStore.userName }}</span>
+            <span class="sidebar-user-email">{{ authStore.userEmail }}</span>
+          </div>
+          <button class="sidebar-logout-icon" @click="handleLogout" title="Sign Out">
+            <i class="bi bi-box-arrow-right"></i>
+          </button>
+        </div>
       </div>
     </aside>
 
@@ -97,20 +89,6 @@
         </div>
 
         <div class="topbar-right">
-          <router-link to="/profile" class="topbar-profile-card" title="View Admin Profile">
-            <div class="topbar-avatar">
-              <img v-if="authStore.userAvatar" :src="orderAvatarUrl(authStore.userAvatar)"
-                :alt="`${authStore.userName} avatar`" @error="$event.target.style.display = 'none'" />
-              <span :class="{ 'avatar-fallback': authStore.userAvatar }">{{ userInitials(authStore.userName) }}</span>
-              <span class="topbar-online-dot"></span>
-            </div>
-            <div class="topbar-user-meta">
-              <span class="topbar-user-name">{{ authStore.userName }}</span>
-              <span class="topbar-user-email">{{ authStore.userEmail }}</span>
-            </div>
-            <span class="topbar-role-badge">ADMIN</span>
-          </router-link>
-
           <button class="topbar-logout-btn" @click="handleLogout" title="Sign Out">
             <i class="bi bi-box-arrow-right t-logout-icon"></i>
           </button>
@@ -123,29 +101,60 @@
         <div v-if="activeTab === 'products'" class="tab-pane-view">
           <div class="section-heading">
             <div>
-              <h2 class="section-title"><i class="fa fa-motorcycle"></i> Superbike Inventory</h2>
-              <p class="section-subtitle">Manage bikes, stock counts, descriptions, and uploaded images.</p>
+              <h2 class="section-title">Superbike inventory</h2>
+              <p class="section-subtitle">Manage bikes, stock, prices and photos in one place.</p>
             </div>
-            <button class="topbar-btn primary" @click="openCreateProductModal">
-              <i class="fa fa-plus"></i>
-              <span>Add New Product</span>
-            </button>
+          </div>
+
+          <!-- Stats Cards Row -->
+          <div class="stats-row">
+            <div class="stat-card">
+              <span class="stat-label">Models</span>
+              <span class="stat-value">{{ products.length }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Units in stock</span>
+              <span class="stat-value">{{ products.reduce((s, b) => s + (b.stock ?? 0), 0) }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Stock value</span>
+              <span class="stat-value">${{ products.reduce((s, b) => s + ((b.price || 0) * (b.stock ?? 0)), 0).toLocaleString() }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Needs attention</span>
+              <span class="stat-value">{{ products.filter(b => (b.stock ?? 0) <= 2).length }}</span>
+            </div>
           </div>
 
           <div class="module-panel">
-            <!-- Control Bar -->
+            <!-- Combined Filter Bar -->
             <div class="module-control-bar">
               <div class="search-box">
                 <i class="fa fa-search search-icon"></i>
                 <input v-model="productSearchQuery" type="text"
-                  placeholder="Search products by model, brand, or description..." />
+                  placeholder="Search by model, brand or ID" />
                 <button v-if="productSearchQuery" class="clear-search-btn" @click="productSearchQuery = ''">
                   <i class="fa fa-times"></i>
                 </button>
               </div>
 
-              <div class="filter-group">
-                <span class="module-counter">{{ filteredProducts.length }} items shown</span>
+              <div class="filter-bar-right">
+                <div class="filter-select-wrap">
+                  <select v-model="productCategoryFilter" class="filter-select">
+                    <option value="all">All categories</option>
+                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                  </select>
+                  <i class="bi bi-chevron-down filter-select-chevron"></i>
+                </div>
+
+                <div class="stock-filter-pills">
+                  <button class="stock-pill" :class="{ active: productStockFilter === 'all' }" @click="productStockFilter = 'all'">All</button>
+                  <button class="stock-pill" :class="{ active: productStockFilter === 'in' }" @click="productStockFilter = 'in'">In stock</button>
+                  <button class="stock-pill" :class="{ active: productStockFilter === 'low' }" @click="productStockFilter = 'low'">Low</button>
+                  <button class="stock-pill out" :class="{ active: productStockFilter === 'out' }" @click="productStockFilter = 'out'">Out</button>
+                </div>
+
+                <span class="module-counter">{{ filteredProducts.length }} product{{ filteredProducts.length !== 1 ? 's' : '' }}</span>
               </div>
             </div>
 
@@ -154,10 +163,10 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Product / Model</th>
-                    <th>Description</th>
+                    <th>Product</th>
+                    <th>Category</th>
                     <th>Price</th>
-                    <th>Stock Quantity</th>
+                    <th>Stock</th>
                     <th>Status</th>
                     <th class="text-right">Actions</th>
                   </tr>
@@ -166,30 +175,43 @@
                   <tr v-for="bike in filteredProducts" :key="bike.id || bike._id">
                     <td>
                       <div class="product-cell">
-                        <ProductImage :src="bike" :alt="bike.name" img-class="bike-thumb" />
+                        <div class="bike-avatar-circle" :style="{ background: !bike.image ? getAvatarColor(bike.name) : '#152238' }">
+                          <img
+                            v-if="bike.image"
+                            :src="productImageUrl(bike.image)"
+                            :alt="bike.name"
+                            class="bike-avatar-img"
+                            @error="$event.target.style.display = 'none'"
+                          />
+                          <span :class="{ 'avatar-fallback': bike.image }">{{ (bike.name || 'B')[0].toUpperCase() }}</span>
+                        </div>
                         <div class="product-info">
                           <strong class="bike-name">{{ bike.name }}</strong>
                           <div class="bike-specs-tags">
-                            <span class="spec-tag year-tag">{{ bike.year || 2026 }}</span>
-                            <span class="spec-tag engine-tag">{{ (bike.engince || bike.engine) ? `${bike.engince || bike.engine}cc` : '999cc' }}</span>
-                            <span class="spec-tag color-tag" v-if="bike.color">
-                              <span class="color-mini-dot" :style="{ backgroundColor: bike.color }"></span>
-                              {{ bike.color }}
-                            </span>
-                            <span class="spec-tag cat-tag">Cat #{{ bike.category_id || 1 }}</span>
+                            <span class="spec-meta">{{ bike.year || 2026 }}</span>
+                            <span class="spec-sep">·</span>
+                            <span class="spec-meta">{{ (bike.engince || bike.engine) ? `${bike.engince || bike.engine}cc` : '999cc' }}</span>
+                            <span v-if="bike.color" class="spec-sep">·</span>
+                            <span v-if="bike.color" class="spec-meta">{{ bike.color }}</span>
+                            <span class="spec-sep">·</span>
+                            <span class="spec-meta">ID #{{ bike.id || bike._id }}</span>
                           </div>
-                          <span class="bike-id font-mono">ID: #{{ bike.id || bike._id }}</span>
                         </div>
                       </div>
                     </td>
-                    <td class="text-muted">{{ bike.description || 'Bigbike Store Exclusive' }}</td>
+                    <td>
+                      <span class="category-badge">{{ getCategoryName(bike.category_id) }}</span>
+                    </td>
                     <td class="font-bold price-tag">${{ (bike.price || 0).toLocaleString() }}</td>
                     <td>
-                      <div class="stock-cell">
-                        <span class="font-mono stock-number">{{ bike.stock ?? 0 }} Units</span>
-                        <button class="stock-edit-btn" @click="openStockModal(bike)"
-                          title="Update Stock (PATCH /products/:id/stock)">
-                          <i class="fa fa-cubes"></i> Stock
+                      <div class="stock-cell-new">
+                        <span class="stock-num">{{ bike.stock ?? 0 }}</span>
+                        <div class="stock-bar-wrap">
+                          <div class="stock-bar-fill" :class="getStockBarClass(bike.stock)"
+                            :style="{ width: getStockPercent(bike.stock) + '%' }"></div>
+                        </div>
+                        <button class="stock-edit-btn" @click="openStockModal(bike)" title="Update Stock">
+                          <i class="fa fa-pencil"></i>
                         </button>
                       </div>
                     </td>
@@ -199,18 +221,16 @@
                         'status-low-stock': (bike.stock ?? 0) > 0 && (bike.stock ?? 0) <= 2,
                         'status-out-of-stock': (bike.stock ?? 0) === 0
                       }">
-                        {{ (bike.stock ?? 0) > 0 ? `In Stock (${bike.stock})` : 'Out of Stock' }}
+                        <span class="status-dot"></span>
+                        {{ (bike.stock ?? 0) > 2 ? 'In stock' : (bike.stock ?? 0) > 0 ? 'Low stock' : 'Out of stock' }}
                       </span>
                     </td>
                     <td class="text-right">
                       <div class="action-buttons">
-                        <button class="tbl-btn edit" @click="openEditProductModal(bike)" title="PATCH /products/:id">
-                          <i class="fa fa-pencil"></i> Edit
-                        </button>
-                        <button class="tbl-btn delete" @click="deleteProduct(bike.id || bike._id)"
-                          title="DELETE /products/:id">
-                          <i class="fa fa-trash"></i> Delete
-                        </button>
+                        <BaseButton variant="secondary" size="sm" @click="openEditProductModal(bike)" title="Edit product">
+                          Edit
+                        </BaseButton>
+                        <BaseButton variant="secondary" size="sm" icon="fa fa-trash" @click="deleteProduct(bike.id || bike._id)" title="Delete" />
                       </div>
                     </td>
                   </tr>
@@ -219,9 +239,9 @@
                       <div class="empty-table-state">
                         <i class="fa fa-motorcycle empty-emoji"></i>
                         <p>No products found matching your search.</p>
-                        <button class="tbl-btn edit" @click="openCreateProductModal">
-                          <i class="fa fa-plus"></i> Add Product
-                        </button>
+                        <BaseButton variant="primary" size="sm" @click="openCreateProductModal">
+                          + Add product
+                        </BaseButton>
                       </div>
                     </td>
                   </tr>
@@ -238,10 +258,6 @@
               <h2 class="section-title"><i class="fa fa-shopping-cart"></i> Customer Orders</h2>
               <p class="section-subtitle">Audit reservations, inspect buyers, and monitor transactions.</p>
             </div>
-            <button class="refresh-pill-btn" @click="fetchOrders" :disabled="isRefreshing">
-              <i class="fa fa-refresh"></i>
-              <span>Refresh Orders</span>
-            </button>
           </div>
 
           <div class="module-panel">
@@ -301,9 +317,9 @@
                       </span>
                     </td>
                     <td class="text-right">
-                      <button class="tbl-btn view" @click="viewOrderDetails(ord)">
-                        <i class="fa fa-eye"></i> Details
-                      </button>
+                      <BaseButton variant="secondary" size="sm" icon="fa fa-eye" @click="viewOrderDetails(ord)">
+                        Details
+                      </BaseButton>
                     </td>
                   </tr>
                   <tr v-if="filteredOrders.length === 0">
@@ -363,10 +379,6 @@
               <h2 class="section-title"><i class="fa fa-users"></i> User & Rider Directory</h2>
               <p class="section-subtitle">Review registered accounts, roles, and administrative privileges.</p>
             </div>
-            <button class="refresh-pill-btn" @click="fetchUsers(1)" :disabled="isRefreshing">
-              <i class="fa fa-refresh"></i>
-              <span>Refresh Users</span>
-            </button>
           </div>
 
           <div class="module-panel">
@@ -421,9 +433,20 @@
                     <td>{{ usr.age != null ? usr.age + ' Yrs' : '—' }}</td>
                     <td class="text-muted">{{ usr.createdAt ? new Date(usr.createdAt).toLocaleDateString() : '—' }}</td>
                     <td class="text-right">
-                      <button class="tbl-btn edit" @click="manageUser(usr)">
-                        <i class="fa fa-cog"></i> Manage
-                      </button>
+                      <div class="action-buttons">
+                        <BaseButton variant="secondary" size="sm" icon="fa fa-cog" @click="manageUser(usr)">
+                          Manage
+                        </BaseButton>
+                        <BaseButton
+                          variant="danger"
+                          size="sm"
+                          icon="fa fa-trash"
+                          :loading="isDeletingUser === usr.id"
+                          :disabled="isDeletingUser === usr.id || (authStore.userId && Number(usr.id) === Number(authStore.userId))"
+                          @click="handleDeleteUser(usr.id, usr.name || usr.email)"
+                          title="Delete User (DELETE /users/:id)"
+                        />
+                      </div>
                     </td>
                   </tr>
                   <tr v-if="filteredUsers.length === 0">
@@ -440,9 +463,99 @@
 
             <!-- Load More Users -->
             <div v-if="userHasMore" class="load-more-row">
-              <button class="tbl-btn view" @click="fetchUsers(userPage + 1)">
-                <i class="fa fa-chevron-down"></i> Load More Users
-              </button>
+              <BaseButton variant="secondary" size="md" icon="fa fa-chevron-down" @click="fetchUsers(userPage + 1)">
+                Load More Users
+              </BaseButton>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 4: CATEGORIES MODULE ────────────────── -->
+        <div v-if="activeTab === 'categories'" class="tab-pane-view">
+          <div class="section-heading">
+            <div>
+              <h2 class="section-title"><i class="bi bi-tags"></i> Brand &amp; Category Directory</h2>
+              <p class="section-subtitle">Manage vehicle brands, classifications, and system category codes (GET /categories &amp; POST /categories).</p>
+            </div>
+            <div class="heading-btn-group">
+              <BaseButton variant="primary" size="md" @click="openCreateCategoryModal">
+                + Add category
+              </BaseButton>
+            </div>
+          </div>
+
+          <div class="module-panel">
+            <!-- Category Control Bar -->
+            <div class="module-control-bar">
+              <div class="search-box">
+                <i class="fa fa-search search-icon"></i>
+                <input v-model="categorySearchQuery" type="text"
+                  placeholder="Search categories by brand name or description..." />
+                <button v-if="categorySearchQuery" class="clear-search-btn" @click="categorySearchQuery = ''">
+                  <i class="fa fa-times"></i>
+                </button>
+              </div>
+
+              <div class="filter-group">
+                <span class="module-counter">{{ filteredCategories.length }} categories listed</span>
+              </div>
+            </div>
+
+            <!-- Categories Data Table -->
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Category ID</th>
+                    <th>Brand / Category Name</th>
+                    <th>Description</th>
+                    <th>Associated Bikes</th>
+                    <th class="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="cat in filteredCategories" :key="cat.id">
+                    <td>
+                      <span class="font-mono text-cyan">#{{ cat.id }}</span>
+                    </td>
+                    <td>
+                      <div class="category-name-cell">
+                        <span class="category-icon-circle">
+                          <i class="bi bi-tag-fill"></i>
+                        </span>
+                        <strong class="category-brand-name">{{ cat.name }}</strong>
+                      </div>
+                    </td>
+                    <td class="text-muted">{{ cat.description || 'No description provided' }}</td>
+                    <td>
+                      <span class="spec-tag engine-tag">
+                        {{ products.filter(p => Number(p.category_id) === Number(cat.id)).length }} Models
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      <div class="action-buttons">
+                        <BaseButton
+                          variant="danger"
+                          size="sm"
+                          icon="fa fa-trash"
+                          :loading="isDeletingCategory === cat.id"
+                          :disabled="isDeletingCategory === cat.id"
+                          @click="handleDeleteCategory(cat.id, cat.name)"
+                          title="Delete Category"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="filteredCategories.length === 0">
+                    <td colspan="5" class="empty-row">
+                      <div class="empty-table-state">
+                        <i class="bi bi-tags empty-emoji"></i>
+                        <p>No categories found matching query.</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -464,11 +577,10 @@
           <div class="form-field">
             <label>Category (category_id)</label>
             <select v-model.number="productForm.category_id" class="form-select" required>
-              <option :value="1">Category 1 — Supersport / Superbike</option>
-              <option :value="2">Category 2 — Hyper Naked / Street</option>
-              <option :value="3">Category 3 — Sport Touring / Adventure</option>
-              <option :value="4">Category 4 — Cruiser / Bobber</option>
-              <option :value="5">Category 5 — Custom / Special</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }} — {{ cat.description || ('Category #' + cat.id) }}
+              </option>
+              <option v-if="categories.length === 0" :value="1">Category 1 (Default)</option>
             </select>
           </div>
         </div>
@@ -542,16 +654,19 @@
             <img :src="productPreviewUrl" alt="Product image preview" class="product-img-preview" />
             <span class="preview-filename">{{ selectedProductFile?.name }}</span>
           </div>
+          <div v-else-if="editingProduct?.image" class="product-preview-box">
+            <img :src="productImageUrl(editingProduct.image)" alt="Current product photo" class="product-img-preview" />
+            <span class="preview-filename">Current photo: {{ editingProduct.image }}</span>
+          </div>
         </div>
 
         <div class="modal-form-actions">
-          <button type="button" class="modal-btn cancel" @click="showProductModal = false"
-            :disabled="isSavingProduct">Cancel</button>
-          <button type="submit" class="modal-btn confirm" :disabled="isSavingProduct">
-            <span v-if="isSavingProduct" class="btn-spinner"></span>
-            <span>{{ isSavingProduct ? 'Saving...' : (editingProduct ? 'Save Changes (PATCH)' : 'Create Product (POST)')
-              }}</span>
-          </button>
+          <BaseButton variant="secondary" size="md" type="button" @click="showProductModal = false" :disabled="isSavingProduct">
+            Cancel
+          </BaseButton>
+          <BaseButton variant="primary" size="md" type="submit" :loading="isSavingProduct" :loadingText="'Saving...'">
+            {{ editingProduct ? 'Save Changes (PATCH)' : 'Create Product (POST)' }}
+          </BaseButton>
         </div>
       </form>
     </BaseModal>
@@ -566,12 +681,38 @@
         </div>
 
         <div class="modal-form-actions">
-          <button type="button" class="modal-btn cancel" @click="showStockModal = false"
-            :disabled="isSavingStock">Cancel</button>
-          <button type="submit" class="modal-btn confirm" :disabled="isSavingStock">
-            <span v-if="isSavingStock" class="btn-spinner"></span>
-            <span>Update Stock</span>
-          </button>
+          <BaseButton variant="secondary" size="md" type="button" @click="showStockModal = false" :disabled="isSavingStock">
+            Cancel
+          </BaseButton>
+          <BaseButton variant="primary" size="md" type="submit" :loading="isSavingStock" :loadingText="'Updating...'">
+            Update Stock
+          </BaseButton>
+        </div>
+      </form>
+    </BaseModal>
+
+    <!-- Create Category Modal (POST /categories) -->
+    <BaseModal v-model="showCategoryModal" title="Create New Category / Brand"
+      subtitle="POST /categories" size="md">
+      <form @submit.prevent="saveCategory" class="modal-form">
+        <div class="form-field full-width">
+          <label>Brand / Category Name (name)</label>
+          <input v-model.trim="categoryForm.name" type="text" placeholder="e.g. YAMAHA, BMW, DUCATI" required />
+        </div>
+
+        <div class="form-field full-width">
+          <label>Description</label>
+          <textarea v-model.trim="categoryForm.description" rows="3" class="form-textarea"
+            placeholder="e.g. High-performance superbikes and hyper-nakeds"></textarea>
+        </div>
+
+        <div class="modal-form-actions">
+          <BaseButton variant="secondary" size="md" type="button" @click="showCategoryModal = false" :disabled="isSavingCategory">
+            Cancel
+          </BaseButton>
+          <BaseButton variant="primary" size="md" type="submit" :loading="isSavingCategory" :disabled="!categoryForm.name" :loadingText="'Creating Category...'">
+            Create Category (POST)
+          </BaseButton>
         </div>
       </form>
     </BaseModal>
@@ -586,6 +727,8 @@ import { useToast } from '@/composables/useToast';
 import productService from '@/services/productService';
 import orderService from '@/services/orderService';
 import userService from '@/services/userService';
+import categoryService from '@/services/categoryService';
+import BaseButton from '@/components/BaseButton.vue';
 import BaseModal from '@/components/BaseModal.vue';
 import ProductImage from '@/components/ProductImage.vue';
 
@@ -601,6 +744,7 @@ const isMobileMenuOpen = ref(false);
 
 const tabTitles = {
   products: 'Superbike Inventory Management',
+  categories: 'Brand & Category Management',
   orders: 'Customer Order Audit',
   users: 'Rider & User Directory',
 };
@@ -614,6 +758,78 @@ const handleLogout = () => {
   authStore.logout();
   toast.info('You have been signed out', 'Session Ended');
   router.push('/login');
+};
+
+// ── Category Module State ─────────────────────────────
+const categories = ref([]);
+const isLoadingCategories = ref(false);
+const isSavingCategory = ref(false);
+const showCategoryModal = ref(false);
+const categorySearchQuery = ref('');
+const productCategoryFilter = ref('all');
+
+const categoryForm = reactive({
+  name: '',
+  description: '',
+});
+
+const openCreateCategoryModal = () => {
+  categoryForm.name = '';
+  categoryForm.description = '';
+  showCategoryModal.value = true;
+};
+
+const saveCategory = async () => {
+  if (!categoryForm.name || !categoryForm.name.trim()) {
+    toast.warning('Category brand name is required.', 'Missing Field');
+    return;
+  }
+  isSavingCategory.value = true;
+  try {
+    await categoryService.createCategory({
+      name: categoryForm.name.trim(),
+      description: categoryForm.description.trim(),
+    });
+    toast.success(`Category "${categoryForm.name}" created successfully!`, 'Category Created');
+    showCategoryModal.value = false;
+    categoryForm.name = '';
+    categoryForm.description = '';
+    await fetchCategories();
+  } catch (err) {
+    const data = err.response?.data;
+    let rawMsg = data?.message || data?.error || err.message || 'Failed to create category.';
+    if (typeof rawMsg === 'object' && rawMsg !== null) {
+      rawMsg = rawMsg.message || rawMsg.error || JSON.stringify(rawMsg);
+    }
+    const msg = Array.isArray(rawMsg) ? rawMsg.join(', ') : String(rawMsg);
+    toast.error(msg, 'Create Category Failed');
+  } finally {
+    isSavingCategory.value = false;
+  }
+};
+
+const isDeletingCategory = ref(null);
+
+const handleDeleteCategory = async (categoryId, categoryName) => {
+  if (!confirm(`Are you sure you want to delete category "${categoryName || categoryId}"?`)) {
+    return;
+  }
+  isDeletingCategory.value = categoryId;
+  try {
+    await categoryService.deleteCategory(categoryId);
+    toast.success(`Category #${categoryId} deleted successfully!`, 'Category Deleted');
+    await fetchCategories();
+  } catch (err) {
+    const data = err.response?.data;
+    let rawMsg = data?.message || data?.error || err.message || 'Failed to delete category.';
+    if (typeof rawMsg === 'object' && rawMsg !== null) {
+      rawMsg = rawMsg.message || rawMsg.error || JSON.stringify(rawMsg);
+    }
+    const msg = Array.isArray(rawMsg) ? rawMsg.join(', ') : String(rawMsg);
+    toast.error(msg, 'Delete Category Failed');
+  } finally {
+    isDeletingCategory.value = null;
+  }
 };
 
 // ── Product Module State ──────────────────────────────
@@ -849,13 +1065,82 @@ const fetchUsers = async (page = 1) => {
   }
 };
 
+// ── Category Fetching & Helpers ───────────────────────
+const fetchCategories = async () => {
+  isLoadingCategories.value = true;
+  try {
+    const res = await categoryService.getAllCategories();
+    // Shape: { result: true, message: "...", data: [ { id: 1, name: "BMW", description: "..." } ] }
+    const payload = res?.data ?? res;
+    if (Array.isArray(payload)) {
+      categories.value = payload;
+    } else if (payload && Array.isArray(payload.data)) {
+      categories.value = payload.data;
+    } else {
+      categories.value = [];
+    }
+  } catch (err) {
+    console.warn('Failed to load categories:', err);
+    categories.value = [];
+  } finally {
+    isLoadingCategories.value = false;
+  }
+};
+
+const getCategoryName = (categoryId) => {
+  if (!categoryId) return 'General';
+  const found = categories.value.find((c) => Number(c.id) === Number(categoryId));
+  return found ? found.name : `Cat #${categoryId}`;
+};
+
+const filteredCategories = computed(() => {
+  const q = categorySearchQuery.value.toLowerCase();
+  return categories.value.filter((cat) => {
+    const name = (cat.name || '').toLowerCase();
+    const desc = (cat.description || '').toLowerCase();
+    return name.includes(q) || desc.includes(q);
+  });
+});
+
 // Filtered Lists
+const productStockFilter = ref('all');
+
+const getAvatarColor = (name) => {
+  const colors = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2'];
+  const idx = (name || 'B').charCodeAt(0) % colors.length;
+  return colors[idx];
+};
+
+const getStockPercent = (stock) => {
+  const s = stock ?? 0;
+  if (s === 0) return 0;
+  return Math.min(100, Math.round((s / 20) * 100));
+};
+
+const getStockBarClass = (stock) => {
+  const s = stock ?? 0;
+  if (s === 0) return 'bar-out';
+  if (s <= 2) return 'bar-low';
+  return 'bar-in';
+};
+
 const filteredProducts = computed(() => {
   return products.value.filter((bike) => {
     const q = productSearchQuery.value.toLowerCase();
     const nameMatch = (bike.name || '').toLowerCase().includes(q);
     const descMatch = (bike.description || '').toLowerCase().includes(q);
-    return nameMatch || descMatch;
+    const idMatch = String(bike.id || bike._id || '').includes(q);
+    const matchesSearch = nameMatch || descMatch || idMatch;
+    const matchesCategory =
+      productCategoryFilter.value === 'all' ||
+      Number(bike.category_id) === Number(productCategoryFilter.value);
+    const s = bike.stock ?? 0;
+    const matchesStock =
+      productStockFilter.value === 'all' ||
+      (productStockFilter.value === 'in' && s > 2) ||
+      (productStockFilter.value === 'low' && s > 0 && s <= 2) ||
+      (productStockFilter.value === 'out' && s === 0);
+    return matchesSearch && matchesCategory && matchesStock;
   });
 });
 
@@ -881,9 +1166,16 @@ const userInitials = (name) => {
 };
 
 const orderAvatarUrl = (avatarPath) => {
-  if (!avatarPath || avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) return avatarPath;
+  if (!avatarPath) return '';
+  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://') || avatarPath.startsWith('data:') || avatarPath.startsWith('blob:')) {
+    return avatarPath;
+  }
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-  return `${apiBase}/${avatarPath.replace(/^\//, '')}`;
+  let clean = avatarPath.replace(/^\//, '');
+  if (!clean.startsWith('uploads/')) {
+    clean = `uploads/profiles/${clean}`;
+  }
+  return `${apiBase}/${clean}`;
 };
 
 const formatOrderDate = (createdAt) => {
@@ -917,9 +1209,16 @@ const unwrapResponseData = (response) => {
 };
 
 const productImageUrl = (imagePath) => {
-  if (!imagePath || imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+  if (!imagePath) return '';
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:') || imagePath.startsWith('blob:')) {
+    return imagePath;
+  }
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-  return `${apiBase}/${imagePath.replace(/^\//, '')}`;
+  let clean = imagePath.replace(/^\//, '');
+  if (!clean.startsWith('uploads/')) {
+    clean = `uploads/products/${clean}`;
+  }
+  return `${apiBase}/${clean}`;
 };
 
 const closeOrderProductModal = () => {
@@ -968,10 +1267,38 @@ const manageUser = (usr) => {
   toast.info(`Managing rider account: ${usr.name || usr.email}`, 'User Module');
 };
 
+const isDeletingUser = ref(null);
+
+const handleDeleteUser = async (userId, userName) => {
+  if (authStore.userId && Number(userId) === Number(authStore.userId)) {
+    toast.warning('You cannot delete your own admin account.', 'Action Not Allowed');
+    return;
+  }
+  if (!confirm(`Are you sure you want to delete rider/user "${userName || userId}"?`)) {
+    return;
+  }
+  isDeletingUser.value = userId;
+  try {
+    await userService.deleteUser(userId);
+    toast.success(`User #${userId} deleted successfully! (DELETE /users/:id)`, 'User Deleted');
+    await fetchUsers(1);
+  } catch (err) {
+    const data = err.response?.data;
+    let rawMsg = data?.message || data?.error || err.message || 'Failed to delete user.';
+    if (typeof rawMsg === 'object' && rawMsg !== null) {
+      rawMsg = rawMsg.message || rawMsg.error || JSON.stringify(rawMsg);
+    }
+    const msg = Array.isArray(rawMsg) ? rawMsg.join(', ') : String(rawMsg);
+    toast.error(msg, 'Delete User Failed');
+  } finally {
+    isDeletingUser.value = null;
+  }
+};
+
 const refreshAllModules = async () => {
   isRefreshing.value = true;
   try {
-    await Promise.all([fetchProducts(), fetchOrders(), fetchUsers(1)]);
+    await Promise.all([fetchProducts(), fetchOrders(), fetchUsers(1), fetchCategories()]);
     toast.success('All telemetry and data synchronized.', 'Data Refreshed');
   } finally {
     isRefreshing.value = false;
@@ -979,7 +1306,7 @@ const refreshAllModules = async () => {
 };
 
 onMounted(async () => {
-  await Promise.all([fetchProducts(), fetchOrders(), fetchUsers(1)]);
+  await Promise.all([fetchProducts(), fetchOrders(), fetchUsers(1), fetchCategories()]);
 });
 </script>
 
@@ -1000,15 +1327,14 @@ onMounted(async () => {
   top: 0;
   left: 0;
   bottom: 0;
-  width: 270px;
-  min-width: 270px;
+  width: 200px;
+  min-width: 200px;
   height: 100vh;
-  background: rgba(11, 15, 25, 0.98);
-  backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0d1117;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 1.15rem;
+  padding: 1.25rem 0.85rem;
   z-index: 100;
   overflow-y: auto;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1018,19 +1344,26 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 1.25rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .brand-logo-wrap {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
-.logo-emoji {
-  font-size: 1.6rem;
+.brand-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.8rem;
 }
 
 .brand-text {
@@ -1039,29 +1372,16 @@ onMounted(async () => {
 }
 
 .brand-title {
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: #f8fafc;
-}
-
-.brand-highlight {
-  color: #38bdf8;
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
-  background: rgba(56, 189, 248, 0.15);
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  margin-left: 0.2rem;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  letter-spacing: -0.01em;
 }
 
 .brand-sub {
   font-size: 0.68rem;
-  color: #64748b;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: #4b5563;
+  font-weight: 500;
 }
 
 .mobile-close-btn {
@@ -1073,102 +1393,11 @@ onMounted(async () => {
   cursor: pointer;
 }
 
-/* Admin Profile Card in Sidebar */
-.admin-profile-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.85rem;
-  background: rgba(30, 41, 59, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  margin-bottom: 1.5rem;
-}
-
-.admin-avatar {
-  position: relative;
-  overflow: hidden;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: #0284c7;
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
-}
-
-.admin-avatar img,
-.topbar-avatar img {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: inherit;
-}
-
-.online-dot {
-  position: absolute;
-  z-index: 2;
-  bottom: -2px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #10b981;
-  border: 2px solid #070a13;
-}
-
-.admin-details {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.admin-name {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #f8fafc;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.admin-email {
-  font-size: 0.72rem;
-  color: #94a3b8;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.admin-role-pill {
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #fbbf24;
-  margin-top: 0.2rem;
-}
-
 /* Nav Menu in Sidebar */
-.nav-section-title {
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: #475569;
-  margin-bottom: 0.65rem;
-  padding-left: 0.5rem;
-}
-
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.25rem;
   flex: 1;
 }
 
@@ -1177,27 +1406,29 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0.75rem 0.9rem;
+  padding: 0.6rem 0.75rem;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  color: #94a3b8;
-  font-size: 0.88rem;
-  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.18s ease;
   text-align: left;
 }
 
 .nav-item-left {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.6rem;
 }
 
 .nav-icon {
-  font-size: 1.15rem;
+  font-size: 1rem;
+  width: 1rem;
+  text-align: center;
 }
 
 .nav-label {
@@ -1205,51 +1436,135 @@ onMounted(async () => {
 }
 
 .nav-item:hover {
-  background: rgba(30, 41, 59, 0.5);
-  color: #f8fafc;
-  border-color: rgba(255, 255, 255, 0.05);
-  transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.04);
+  color: #d1d5db;
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(2, 132, 199, 0.25) 100%);
-  color: #38bdf8;
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.15);
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f9fafb;
+  font-weight: 600;
 }
 
 .nav-count {
-  font-size: 0.68rem;
-  font-weight: 800;
-  padding: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
   border-radius: 20px;
+  min-width: 20px;
+  text-align: center;
 }
 
-.cyan-count {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-}
+.cyan-count { background: rgba(56,189,248,0.1); color: #38bdf8; }
+.amber-count { background: rgba(245,158,11,0.1); color: #fbbf24; }
+.emerald-count { background: rgba(16,185,129,0.1); color: #34d399; }
+.purple-count { background: rgba(168,85,247,0.1); color: #c084fc; }
 
-.amber-count {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-}
-
-.emerald-count {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-}
-
-/* Sidebar Footer */
-.sidebar-footer {
+/* Category cells */
+.category-name-cell {
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  padding-top: 1rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.category-icon-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #c084fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.category-brand-name {
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* Sidebar Footer – User Row */
+.sidebar-footer {
+  padding-top: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.sidebar-user-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.25rem;
+}
+
+.sidebar-user-avatar {
+  position: relative;
+  overflow: hidden;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-user-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.sidebar-user-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-user-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-email {
+  font-size: 0.68rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-logout-icon {
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.sidebar-logout-icon:hover { color: #fb7185; }
+
+/* Keep legacy footer-action-btn for fallback */
 .footer-action-btn {
   display: flex;
   align-items: center;
@@ -1298,13 +1613,13 @@ onMounted(async () => {
 
 /* ── 2. MAIN CONTENT STYLES ──────────────────────────────── */
 .admin-main {
-  margin-left: 270px;
-  width: calc(100% - 270px);
+  margin-left: 200px;
+  width: calc(100% - 200px);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: #070a13;
+  background: #111827;
 }
 
 /* Main Top Bar Header */
@@ -1478,50 +1793,50 @@ onMounted(async () => {
 
 /* Main Body Content */
 .main-body-content {
-  padding: 2rem 2.25rem 4rem 2.25rem;
+  padding: 1.75rem 2rem 4rem 2rem;
   flex: 1;
 }
 
 .tab-pane-view {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 1.5rem;
+  animation: fadeIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Section Headings */
 .section-heading {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
 }
 
+.heading-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .section-title {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: #f8fafc;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #f9fafb;
   margin: 0;
   letter-spacing: -0.02em;
 }
 
 .section-subtitle {
-  font-size: 0.88rem;
-  color: #94a3b8;
-  margin: 0.25rem 0 0;
+  font-size: 0.84rem;
+  color: #6b7280;
+  margin: 0.2rem 0 0;
 }
 
 .refresh-pill-btn {
@@ -1544,12 +1859,41 @@ onMounted(async () => {
   color: #38bdf8;
 }
 
+/* ── STATS CARDS ROW ────────────────────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.stat-card {
+  background: #1a2234;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #f9fafb;
+  line-height: 1.1;
+}
+
 /* ── 3. MODULE PANELS & DATA TABLES ──────────────────────── */
 .module-panel {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: #1a2234;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -1557,10 +1901,66 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.15rem 1.4rem;
+  padding: 0.9rem 1.25rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 0.75rem;
   flex-wrap: wrap;
-  gap: 1rem;
+}
+
+.filter-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.filter-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.filter-select-chevron {
+  position: absolute;
+  right: 0.65rem;
+  color: #6b7280;
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.stock-filter-pills {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 0.2rem;
+  gap: 0.15rem;
+}
+
+.stock-pill {
+  padding: 0.25rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.stock-pill:hover { color: #d1d5db; }
+
+.stock-pill.active {
+  background: #1e293b;
+  color: #f9fafb;
+}
+
+.stock-pill.out.active {
+  background: rgba(244, 63, 94, 0.18);
+  color: #fb7185;
 }
 
 .search-box {
@@ -1765,26 +2165,65 @@ onMounted(async () => {
 .product-cell {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 0.75rem;
 }
 
-:deep(.bike-thumb) {
-  width: 48px;
-  height: 48px;
+.bike-avatar-circle {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  background: #152238;
+}
+
+.bike-avatar-img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 10px;
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: block;
+}
+
+.bike-avatar-circle img[style*='display: none'] + .avatar-fallback {
+  display: flex;
 }
 
 .product-info {
   display: flex;
   flex-direction: column;
+  gap: 0.15rem;
 }
 
 .bike-name {
-  color: #f8fafc;
-  font-size: 0.92rem;
+  color: #f9fafb;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.bike-specs-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.1rem;
+}
+
+.spec-meta {
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+
+.spec-sep {
+  font-size: 0.72rem;
+  color: #374151;
+  margin: 0 0.15rem;
 }
 
 .bike-id {
@@ -1793,9 +2232,55 @@ onMounted(async () => {
 }
 
 .price-tag {
-  color: #a3e635;
-  font-size: 0.95rem;
+  color: #f9fafb;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
+
+.category-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: rgba(255,255,255,0.07);
+  color: #d1d5db;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* New stock cell with progress bar */
+.stock-cell-new {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 130px;
+}
+
+.stock-num {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #d1d5db;
+  min-width: 18px;
+  text-align: right;
+}
+
+.stock-bar-wrap {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.stock-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.bar-in { background: #22c55e; }
+.bar-low { background: #f59e0b; }
+.bar-out { background: #ef4444; width: 0 !important; }
 
 .stock-cell {
   display: flex;
@@ -1803,96 +2288,147 @@ onMounted(async () => {
   gap: 0.5rem;
 }
 
-.stock-number {
-  color: #f8fafc;
-}
+.stock-number { color: #f8fafc; }
 
 .stock-edit-btn {
-  padding: 0.2rem 0.45rem;
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  color: #38bdf8;
-  border-radius: 6px;
+  padding: 0.2rem 0.4rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #6b7280;
+  border-radius: 5px;
   font-size: 0.72rem;
-  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .stock-edit-btn:hover {
-  background: rgba(56, 189, 248, 0.25);
+  background: rgba(56,189,248,0.1);
+  border-color: #38bdf8;
+  color: #38bdf8;
 }
 
 .status-pill {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.25rem 0.65rem;
-  border-radius: 20px;
+  border-radius: 6px;
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .status-in-stock {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
 }
+.status-in-stock .status-dot { background: #4ade80; }
 
 .status-low-stock {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.12);
   color: #fbbf24;
 }
+.status-low-stock .status-dot { background: #fbbf24; }
 
 .status-out-of-stock {
-  background: rgba(244, 63, 94, 0.15);
-  color: #fb7185;
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
 }
+.status-out-of-stock .status-dot { background: #f87171; }
 
 .action-buttons {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.45rem;
+  gap: 0.4rem;
+}
+
+.tbl-btn-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  border: 1px solid #233554;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: #152238;
+  color: #64748b;
+}
+
+.tbl-btn-icon.delete:hover {
+  background: #22141c;
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.4);
 }
 
 .tbl-btn {
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  padding: 0.38rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
+  transition: all 0.16s ease;
+  border: 1px solid #233554;
   font-family: inherit;
+  background: #152238;
+  color: #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.tbl-btn:hover {
+  background: #1c2e4c;
+  color: #ffffff;
+  border-color: #3b82f6;
 }
 
 .tbl-btn.edit {
-  background: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
-  border-color: rgba(56, 189, 248, 0.3);
+  background: #152238;
+  color: #cbd5e1;
+  border-color: #233554;
 }
 
 .tbl-btn.edit:hover {
-  background: rgba(56, 189, 248, 0.25);
+  background: #1c2e4c;
+  color: #ffffff;
+  border-color: #3b82f6;
 }
 
 .tbl-btn.delete {
-  background: rgba(244, 63, 94, 0.12);
-  color: #fb7185;
-  border-color: rgba(244, 63, 94, 0.3);
+  background: #22141c;
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.25);
 }
 
 .tbl-btn.delete:hover {
-  background: rgba(244, 63, 94, 0.25);
-  color: #fff;
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
 }
 
 .tbl-btn.view {
-  background: rgba(99, 102, 241, 0.12);
-  color: #a5b4fc;
-  border-color: rgba(99, 102, 241, 0.3);
+  background: #152238;
+  color: #cbd5e1;
+  border-color: #233554;
 }
 
 .tbl-btn.view:hover {
-  background: rgba(99, 102, 241, 0.25);
+  background: #1c2e4c;
+  color: #ffffff;
+  border-color: #3b82f6;
 }
 
 .empty-row {
@@ -2020,6 +2556,8 @@ onMounted(async () => {
 
 .form-field input[type="text"],
 .form-field input[type="number"],
+.form-field textarea,
+.form-textarea,
 .form-field select,
 .form-select {
   background: rgba(15, 23, 42, 0.8);
@@ -2040,6 +2578,8 @@ onMounted(async () => {
 }
 
 .form-field input:focus,
+.form-field textarea:focus,
+.form-textarea:focus,
 .form-field select:focus,
 .form-select:focus {
   border-color: #38bdf8;
@@ -2238,38 +2778,46 @@ onMounted(async () => {
 }
 
 .modal-btn {
-  padding: 0.65rem 1.25rem;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 0.88rem;
+  padding: 0.52rem 1.15rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s;
-  border: none;
+  transition: all 0.16s ease;
+  border: 1px solid transparent;
   font-family: inherit;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
 }
 
 .modal-btn.cancel {
-  background: rgba(30, 41, 59, 0.8);
-  color: #94a3b8;
-  border: 1px solid rgba(71, 85, 105, 0.4);
+  background: #152238;
+  color: #cbd5e1;
+  border: 1px solid #233554;
+  font-weight: 500;
 }
 
 .modal-btn.cancel:hover {
-  color: #f8fafc;
-  border-color: #94a3b8;
+  background: #1c2e4c;
+  color: #ffffff;
+  border-color: #3b82f6;
 }
 
 .modal-btn.confirm {
-  background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
+  background: #3b82f6;
+  color: #000000;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .modal-btn.confirm:hover:not(:disabled) {
-  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.6);
+  background: #60a5fa;
+  color: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
 }
 
 .modal-btn:disabled {
@@ -2337,16 +2885,15 @@ onMounted(async () => {
   }
 
   .main-body-content {
-    padding: 1.25rem 1.25rem 3rem 1.25rem;
+    padding: 1.25rem 1rem 3rem 1rem;
+  }
+
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .form-row {
     grid-template-columns: 1fr;
-  }
-
-  .order-card-footer {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .order-product-detail {

@@ -2,6 +2,23 @@ import { defineStore } from 'pinia';
 import authService from '@/services/authService';
 import { STORAGE_KEYS, USER_ROLES } from '@/constants';
 
+function decodeJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_INFO) || 'null'),
@@ -35,7 +52,7 @@ export const useAuthStore = defineStore('auth', {
         const response = await authService.login(credentials);
         
         // Extract token
-        const token = response?.access_token || response?.token || response?.data?.access_token || response?.data?.token;
+        const token = response?.data?.token;
         
         if (token) {
           this.token = token;
@@ -84,21 +101,35 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-
     async setAuthData({ token, user }) {
       if (token) {
         this.token = token;
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+
+        if (!user) {
+          const payload = decodeJwt(token);
+          if (payload) {
+            user = {
+              id: payload.sub || payload.id,
+              email: payload.email,
+              role: (payload.role || USER_ROLES.USER).toLowerCase(),
+              name: payload.name || payload.username || (payload.email ? payload.email.split('@')[0] : 'User'),
+            };
+          }
+        }
       }
+
       if (user) {
         this.user = user;
         localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(user));
       }
+
       if (token) {
         try {
           await this.fetchProfile();
         } catch (e) {
-          // If profile fetch fails, user object from OAuth is still preserved
+          // If profile fetch fails, user object from OAuth / token payload is still preserved
+          console.warn('OAuth profile fetch error, keeping payload profile', e);
         }
       }
     },

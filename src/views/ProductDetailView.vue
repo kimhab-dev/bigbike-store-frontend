@@ -91,7 +91,7 @@
             </div>
             <div class="meta-item">
               <span class="meta-k">Category</span>
-              <span class="meta-v">Cat #{{ product.category_id || 1 }}</span>
+              <span class="meta-v">{{ categoryName }}</span>
             </div>
             <div class="meta-item">
               <span class="meta-k">Stock Status</span>
@@ -188,11 +188,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import productService from '@/services/productService';
 import orderService from '@/services/orderService';
+import categoryService from '@/services/categoryService';
 import ProductImage from '@/components/ProductImage.vue';
 import { useToast } from '@/composables/useToast';
 
@@ -203,6 +204,7 @@ const toast = useToast();
 
 // ── State ────────────────────────────────────────
 const product = ref(null);
+const categories = ref([]);
 const loading = ref(true);
 const error = ref('');
 const qty = ref(1);
@@ -213,6 +215,13 @@ const lastQty = ref(1);
 const lastTotal = ref('');
 
 // ── Helpers ──────────────────────────────────────
+const categoryName = computed(() => {
+  const catId = product.value?.category_id;
+  if (!catId) return 'Superbike';
+  const found = categories.value.find((c) => Number(c.id) === Number(catId));
+  return found ? found.name : `Cat #${catId}`;
+});
+
 const formatPrice = (p) => {
   if (p == null) return 'Contact us';
   return '$' + Number(p).toLocaleString('en-US', { minimumFractionDigits: 0 });
@@ -290,8 +299,17 @@ const goHome = () => {
 };
 
 // ── Boot ─────────────────────────────────────────
-onMounted(() => {
+onMounted(async () => {
   fetchProduct();
+  if (authStore.isAdmin) {
+    try {
+      const res = await categoryService.getAllCategories();
+      const payload = res?.data ?? res;
+      categories.value = Array.isArray(payload) ? payload : (payload?.data ?? []);
+    } catch (e) {
+      // Ignored for non-admin or failed fetch
+    }
+  }
 });
 </script>
 
