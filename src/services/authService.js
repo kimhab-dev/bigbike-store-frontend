@@ -34,12 +34,12 @@ export const authService = {
     return api.get(API_ENDPOINTS.AUTH.PROFILE);
   },
 
+  updateProfile(data) {
+    return api.patch(API_ENDPOINTS.AUTH.PROFILE, data);
+  },
+
   uploadAvatar(formData) {
-    return api.post(API_ENDPOINTS.AUTH.AVATAR, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    return api.post(API_ENDPOINTS.AUTH.AVATAR, formData);
   },
 
   deleteAvatar() {

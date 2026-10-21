@@ -18,6 +18,11 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // If sending FormData, remove Content-Type so the browser sets
+    // 'multipart/form-data; boundary=----WebKitFormBoundary...' automatically
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error) => {

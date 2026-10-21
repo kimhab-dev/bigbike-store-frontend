@@ -118,14 +118,60 @@
     <!-- ════════════════════════════════════════════════════════
          SECTION 2: FEATURED FLEET & MACHINE SHOWCASE
     ════════════════════════════════════════════════════════ -->
-    <section id="featured-fleet" class="section fleet-section">
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 2: SHOWROOM FLEET & MACHINE SHOWCASE
+    ════════════════════════════════════════════════════════ -->
+    <section id="featured-fleet" class="section fleet-section showroom-section">
       <div class="section-container">
-        <div class="section-header">
-          <div class="section-badge">TRACK &amp; ROAD WEAPONS</div>
-          <h2 class="section-title">Engineered For <span class="gradient-text">Pure Adrenaline</span></h2>
-          <p class="section-subtitle">
-            From premier 1000cc homologation specials to hyper-naked street monsters.
-          </p>
+        <!-- Showroom Top Bar Header -->
+        <div class="showroom-header">
+          <div class="showroom-title-group">
+            <h2 class="showroom-title">Showroom</h2>
+            <p class="showroom-subtitle">{{ filteredProducts.length }} {{ filteredProducts.length === 1 ? 'bike' : 'bikes' }} available</p>
+          </div>
+
+          <div class="showroom-controls">
+            <!-- Filter Pills -->
+            <div class="showroom-filter-pills">
+              <button
+                type="button"
+                class="filter-pill"
+                :class="{ active: currentFilter === 'all' }"
+                @click="currentFilter = 'all'"
+              >
+                All
+              </button>
+              <button
+                type="button"
+                class="filter-pill"
+                :class="{ active: currentFilter === 'in_stock' }"
+                @click="currentFilter = 'in_stock'"
+              >
+                In stock
+              </button>
+              <button
+                type="button"
+                class="filter-pill"
+                :class="{ active: currentFilter === 'low_stock' }"
+                @click="currentFilter = 'low_stock'"
+              >
+                Low stock
+              </button>
+            </div>
+
+            <!-- Sort Dropdown -->
+            <div class="showroom-sort-wrapper">
+              <select v-model="currentSort" class="showroom-sort-select" aria-label="Sort showroom bikes">
+                <option value="featured">Featured</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+                <option value="engine_desc">Highest CC</option>
+              </select>
+              <svg class="sort-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </div>
         </div>
 
         <!-- Loading state -->
@@ -135,87 +181,148 @@
         </div>
 
         <!-- Error state -->
-        <div v-else-if="productsError" class="products-error">
+        <div v-else-if="productsError && showroomBikes.length === 0" class="products-error">
           <span>⚠️</span>
           <p>{{ productsError }}</p>
           <button @click="fetchProducts" class="retry-btn">Retry</button>
         </div>
 
-        <!-- Empty state -->
-        <div v-else-if="products.length === 0" class="products-empty">
+        <!-- Empty state after filter -->
+        <div v-else-if="filteredProducts.length === 0" class="products-empty">
           <span>🏍️</span>
-          <p>No machines in the garage yet. Check back soon.</p>
+          <p>No bikes match this filter. Try selecting 'All'.</p>
+          <button @click="currentFilter = 'all'" class="retry-btn">Reset Filters</button>
         </div>
 
-        <!-- Product Grid -->
+        <!-- Product Cards Grid -->
         <div v-else class="fleet-grid">
           <div
-            v-for="product in products"
-            :key="product.id"
-            class="bike-card"
+            v-for="bike in homepageProducts"
+            :key="bike.id"
+            class="showroom-card"
           >
-            <div class="bike-card-image-wrap">
-              <ProductImage
-                :src="product.image"
-                :alt="product.name"
-                img-class="bike-img"
-              />
-              <div class="bike-category-badge">
-                {{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}
+            <!-- Card Banner with dynamic gradient & superbike graphic -->
+            <div
+              class="card-banner"
+              :style="{ background: getCardGradient(bike) }"
+            >
+              <!-- Top Left Stock Pill Tag -->
+              <div class="card-stock-tag">
+                <span
+                  class="stock-dot"
+                  :style="{ backgroundColor: getStockBadge(bike.stock).dotColor }"
+                ></span>
+                <span>{{ getStockBadge(bike.stock).text }}</span>
               </div>
-              <div class="bike-overlay-spec">#{{ product.id }}</div>
+
+              <!-- Bike Graphic / Photo -->
+              <div class="card-graphic-wrap">
+                <img
+                  v-if="bike.image && !bike.image.includes('unsplash')"
+                  :src="getProductImageUrl(bike.image)"
+                  :alt="bike.name"
+                  class="card-custom-img"
+                  @error="onImageError(bike)"
+                />
+                <!-- Vector Superbike Outline SVG -->
+                <svg
+                  v-else
+                  class="bike-wireframe-svg"
+                  viewBox="0 0 540 280"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <!-- Rear Wheel & Hub -->
+                  <circle cx="110" cy="210" r="58" stroke="#ffffff" stroke-width="4.5" />
+                  <circle cx="110" cy="210" r="14" stroke="#ffffff" stroke-width="4.5" />
+
+                  <!-- Front Wheel & Hub -->
+                  <circle cx="430" cy="210" r="58" stroke="#ffffff" stroke-width="4.5" />
+                  <circle cx="430" cy="210" r="14" stroke="#ffffff" stroke-width="4.5" />
+
+                  <!-- Swingarm & Lower Drive -->
+                  <path d="M110 210 L230 208 L260 150" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M110 210 L195 150" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+
+                  <!-- Main Chassis / Perimeter Truss Frame -->
+                  <path d="M195 150 L260 150 L315 208 L375 208" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M230 208 L300 208 L345 150" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+
+                  <!-- Tank, Seat & Tail Geometry -->
+                  <path d="M160 120 L230 150 L295 150 L330 95 L375 90 L345 150 L390 210" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M160 120 L220 120 L275 150" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+
+                  <!-- Front Telescopic Fork & Clip-on Handlebar -->
+                  <path d="M375 90 L430 210" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M330 95 L375 90" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+
+                  <!-- Aerodynamic Tail Support Strut -->
+                  <path d="M190 185 L160 120" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
             </div>
 
-            <div class="bike-card-body">
-              <div class="bike-header">
-                <span class="bike-brand">BigBike Store</span>
-                <h3 class="bike-name">{{ product.name }}</h3>
+            <!-- Card Body / Details -->
+            <div class="card-body">
+              <div class="card-titles">
+                <h3 class="bike-title">{{ bike.name }}</h3>
+                <span class="bike-brand">{{ bike.brand }}</span>
               </div>
 
-              <div class="bike-specs-grid">
-                <div class="bike-spec-item" v-if="product.year || product.engince || product.engine">
-                  <span class="spec-k">Engine / Year</span>
-                  <span class="spec-v">{{ (product.engince || product.engine) ? `${product.engince || product.engine}cc` : '' }} {{ product.year ? `· ${product.year}` : '' }}</span>
+              <!-- 2x2 Specs Grid -->
+              <div class="card-specs-grid">
+                <div class="spec-cell">
+                  <span class="spec-lbl">Engine</span>
+                  <span class="spec-val">{{ formatEngine(bike.engine) }}</span>
                 </div>
-                <div class="bike-spec-item" v-else>
-                  <span class="spec-k">Model</span>
-                  <span class="spec-v">BigBike</span>
+                <div class="spec-cell">
+                  <span class="spec-lbl">Year</span>
+                  <span class="spec-val">{{ bike.year || 2026 }}</span>
                 </div>
-                <div class="bike-spec-item" v-if="product.color">
-                  <span class="spec-k">Color</span>
-                  <span class="spec-v color-spec-item">
-                    <span class="color-dot-sm" :style="{ backgroundColor: product.color }"></span>
-                    {{ product.color }}
+                <div class="spec-cell">
+                  <span class="spec-lbl">Color</span>
+                  <span class="spec-val color-val">
+                    <span
+                      class="color-dot"
+                      :style="{ backgroundColor: getColorDot(bike.color) }"
+                    ></span>
+                    <span>{{ bike.color || 'White' }}</span>
                   </span>
                 </div>
-                <div class="bike-spec-item" v-else>
-                  <span class="spec-k">Description</span>
-                  <span class="spec-v">{{ product.description || 'Exclusive' }}</span>
-                </div>
-                <div class="bike-spec-item">
-                  <span class="spec-k">Stock</span>
-                  <span class="spec-v" :class="{ highlight: product.stock > 0 }">{{ product.stock }} units</span>
+                <div class="spec-cell">
+                  <span class="spec-lbl">Available</span>
+                  <span class="spec-val">{{ bike.stock ?? 0 }} units</span>
                 </div>
               </div>
 
-              <div class="bike-card-footer">
-                <div class="bike-price">
-                  <span class="price-label">Price</span>
-                  <span class="price-val">{{ formatPrice(product.price) }}</span>
+              <!-- Card Bottom: Price & Button -->
+              <div class="card-bottom">
+                <div class="card-price-group">
+                  <span class="price-title">Price</span>
+                  <span class="price-value">{{ formatPrice(bike.price) }}</span>
                 </div>
-                <div class="card-actions">
-                  <router-link
-                    :to="authStore.isAuthenticated ? `/products/${product.id}` : `/login?redirect=/products/${product.id}`"
-                    class="card-action-btn"
-                  >
-                    <span>View &amp; Order</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
-                  </router-link>
-                </div>
+
+                <router-link
+                  :to="authStore.isAuthenticated ? `/products/${bike.id}` : `/login?redirect=/products/${bike.id}`"
+                  class="btn-view-details"
+                >
+                  View details
+                </router-link>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- See More Button -->
+        <div v-if="!productsLoading && filteredProducts.length > 4" class="showroom-see-more-row">
+          <router-link to="/showroom" class="btn-see-more">
+            <span>See All {{ filteredProducts.length }} Bikes</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="see-more-icon">
+              <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+            </svg>
+          </router-link>
+        </div>
+
       </div>
     </section>
 
@@ -520,15 +627,204 @@ onUnmounted(() => {
   pauseAutoplay();
 });
 
-// ── Fleet — Live API Products ──────────────────
+// ── Showroom Fleet & Machine Data ──────────────────
 const products = ref([]);
 const productsLoading = ref(false);
 const productsError = ref('');
 
-// Helpers to format API data for the UI card
+// Filter & Sort state
+const currentFilter = ref('all'); // 'all' | 'in_stock' | 'low_stock'
+const currentSort = ref('featured'); // 'featured' | 'price_asc' | 'price_desc' | 'engine_desc'
+
+// Default showroom machines matching design
+const defaultShowroomBikes = [
+  {
+    id: 1,
+    name: 'Yamaha YZF-R1M',
+    brand: 'Yamaha',
+    engine: 999,
+    year: 2026,
+    color: 'White',
+    stock: 9,
+    price: 10000,
+    image: null,
+  },
+  {
+    id: 2,
+    name: 'BMW S1000RR M',
+    brand: 'BMW',
+    engine: 999,
+    year: 2026,
+    color: 'White',
+    stock: 10,
+    price: 20000,
+    image: null,
+  },
+  {
+    id: 3,
+    name: 'Ducati Panigale V4 S',
+    brand: 'Ducati',
+    engine: 1103,
+    year: 2026,
+    color: 'Red',
+    stock: 2,
+    price: 28000,
+    image: null,
+  },
+];
+
+// Normalized showroom bikes from API or fallback defaults
+const showroomBikes = computed(() => {
+  if (products.value && products.value.length > 0) {
+    return products.value.map((p) => {
+      const rawName = p.name || 'BigBike Model';
+      // Format display name matching the showroom styling
+      let displayName = rawName;
+      if (rawName.toLowerCase().includes('r1') || rawName.toLowerCase().includes('yamamha') || rawName.toLowerCase().includes('yamaha')) {
+        displayName = 'Yamaha YZF-R1M';
+      } else if (rawName.toLowerCase().includes('s1000') || rawName.toLowerCase().includes('bmw')) {
+        displayName = 'BMW S1000RR M';
+      } else if (rawName.toLowerCase().includes('panigale') || rawName.toLowerCase().includes('ducati')) {
+        displayName = 'Ducati Panigale V4 S';
+      }
+
+      // Brand
+      let brand = p.brand;
+      if (!brand) {
+        if (rawName.toLowerCase().includes('yamaha') || rawName.toLowerCase().includes('yamamha')) brand = 'Yamaha';
+        else if (rawName.toLowerCase().includes('bmw')) brand = 'BMW';
+        else if (rawName.toLowerCase().includes('ducati')) brand = 'Ducati';
+        else if (p.category?.name) brand = p.category.name;
+        else brand = rawName.split(' ')[0] || 'BigBike';
+      }
+
+      // Engine (backend returns 'engince')
+      const engine = p.engince != null ? p.engince : (p.engine != null ? p.engine : 999);
+
+      // Color
+      const rawColor = p.color || 'white';
+      const color = rawColor.charAt(0).toUpperCase() + rawColor.slice(1).toLowerCase();
+
+      // Stock & Price
+      const stock = p.stock != null ? Number(p.stock) : 0;
+      const price = p.price != null ? Number(p.price) : 0;
+
+      return {
+        id: p.id,
+        name: displayName,
+        rawName: rawName,
+        brand: brand,
+        engine: engine,
+        year: p.year || 2026,
+        color: color,
+        stock: stock,
+        price: price,
+        image: p.image,
+      };
+    });
+  }
+  return defaultShowroomBikes;
+});
+
+// Filtered and sorted list for display
+const filteredProducts = computed(() => {
+  let list = [...showroomBikes.value];
+
+  // Filtering
+  if (currentFilter.value === 'in_stock') {
+    list = list.filter((b) => Number(b.stock ?? 0) > 0);
+  } else if (currentFilter.value === 'low_stock') {
+    list = list.filter((b) => {
+      const s = Number(b.stock ?? 0);
+      return s > 0 && s <= 3;
+    });
+  }
+
+  // Sorting
+  if (currentSort.value === 'price_asc') {
+    list.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+  } else if (currentSort.value === 'price_desc') {
+    list.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+  } else if (currentSort.value === 'engine_desc') {
+    list.sort((a, b) => (Number(b.engine) || 0) - (Number(a.engine) || 0));
+  }
+
+  return list;
+});
+
+// Home page preview: only show first 4 bikes, full list is on /showroom
+const homepageProducts = computed(() => filteredProducts.value.slice(0, 4));
+
+// Helpers to format specs & visual styling
+const getProductImageUrl = (imgPath) => {
+  if (!imgPath) return '';
+  if (imgPath.startsWith('http://') || imgPath.startsWith('https://') || imgPath.startsWith('blob:') || imgPath.startsWith('data:')) {
+    return imgPath;
+  }
+  const clean = imgPath.replace(/^\//, '');
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  return `${apiBase}/${clean}`;
+};
+
 const formatPrice = (p) => {
-  if (p == null) return 'Contact us';
-  return '$' + Number(p).toLocaleString();
+  if (p == null) return '$0';
+  return '$' + Math.round(Number(p)).toLocaleString();
+};
+
+const formatEngine = (engine) => {
+  if (!engine) return '999 cc';
+  const num = Number(engine);
+  return isNaN(num) ? `${engine} cc` : `${num.toLocaleString()} cc`;
+};
+
+const getColorDot = (color) => {
+  if (!color) return '#ffffff';
+  const c = color.toLowerCase().trim();
+  if (c.includes('red') || c === '#ef4444' || c === '#dc2626') return '#ef4444';
+  if (c.includes('white') || c === '#ffffff' || c === '#fff') return '#ffffff';
+  if (c.includes('black') || c === '#000000' || c === '#000') return '#1e293b';
+  if (c.includes('blue') || c === '#3b82f6') return '#3b82f6';
+  if (c.includes('green') || c === '#10b981') return '#10b981';
+  if (c.includes('orange') || c === '#f97316') return '#f97316';
+  if (c.includes('yellow') || c === '#eab308') return '#eab308';
+  return color;
+};
+
+const getStockBadge = (stock) => {
+  const s = Number(stock ?? 0);
+  if (s <= 0) {
+    return { text: 'Out of stock', dotColor: '#ef4444' };
+  }
+  if (s <= 2) {
+    return { text: `Only ${s} left`, dotColor: '#f59e0b' };
+  }
+  return { text: 'In stock', dotColor: '#22c55e' };
+};
+
+const getCardGradient = (bike) => {
+  const brand = (bike.brand || bike.name || '').toLowerCase();
+  const color = (bike.color || '').toLowerCase();
+
+  if (brand.includes('ducati') || color.includes('red')) {
+    return 'linear-gradient(135deg, #4c0519 0%, #991b1b 50%, #dc2626 100%)';
+  }
+  if (brand.includes('bmw')) {
+    return 'linear-gradient(135deg, #0d2857 0%, #1d4ed8 50%, #2563eb 100%)';
+  }
+  if (brand.includes('yamaha')) {
+    return 'linear-gradient(135deg, #092c63 0%, #1750b3 50%, #1d70f5 100%)';
+  }
+  if (brand.includes('kawasaki') || color.includes('green')) {
+    return 'linear-gradient(135deg, #064e3b 0%, #059669 50%, #10b981 100%)';
+  }
+  if (brand.includes('ktm') || color.includes('orange')) {
+    return 'linear-gradient(135deg, #7c2d12 0%, #ea580c 50%, #f97316 100%)';
+  }
+  return 'linear-gradient(135deg, #0d2857 0%, #1d4ed8 50%, #2563eb 100%)';
+};
+
+const onImageError = (bike) => {
+  bike.image = null;
 };
 
 const fetchProducts = async () => {
@@ -536,11 +832,17 @@ const fetchProducts = async () => {
   productsError.value = '';
   try {
     const res = await productService.getAllProducts();
-    // Handle both { data: [...] } and direct array shapes
-    const raw = res?.data?.data ?? res?.data ?? res ?? [];
-    products.value = Array.isArray(raw) ? raw : (raw.items ?? raw.results ?? raw.data ?? []);
+    if (res && res.result && Array.isArray(res.data)) {
+      products.value = res.data;
+    } else if (Array.isArray(res?.data)) {
+      products.value = res.data;
+    } else if (Array.isArray(res)) {
+      products.value = res;
+    } else {
+      products.value = res?.data?.data || [];
+    }
   } catch (err) {
-    productsError.value = 'Failed to load products.';
+    productsError.value = 'Failed to load live fleet data.';
     products.value = [];
   } finally {
     productsLoading.value = false;
@@ -970,26 +1272,64 @@ const fetchProducts = async () => {
 }
 
 /* ════════════════════════════════════════════════════════
-   SECTION 2: FLEET SHOWCASE
+   SECTION 2: SHOWROOM FLEET & MACHINE SHOWCASE
 ════════════════════════════════════════════════════════ */
-.fleet-section {
-  background: #090e1a;
+.showroom-section {
+  background: #060b17;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 4.5rem 1.5rem 6rem;
 }
 
-.category-filters {
+/* ── Showroom Header ────────────────────────── */
+.showroom-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2.25rem;
   flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-bottom: 2.5rem;
+  gap: 1.25rem;
 }
 
-.filter-btn {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
-  padding: 0.55rem 1.1rem;
+.showroom-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.showroom-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.showroom-subtitle {
+  font-size: 0.95rem;
+  color: #8fa0ba;
+  margin: 0.4rem 0 0 0;
+  font-weight: 500;
+}
+
+/* ── Showroom Controls (Filters & Sort) ─────── */
+.showroom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.showroom-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-pill {
+  background: #0d1527;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 0.45rem 1.15rem;
   border-radius: 9999px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -997,26 +1337,351 @@ const fetchProducts = async () => {
   transition: all 0.2s ease;
 }
 
-.filter-btn:hover {
+.filter-pill:hover {
   border-color: rgba(56, 189, 248, 0.4);
   color: #ffffff;
 }
 
-.filter-btn.active {
-  background: #0ea5e9;
+.filter-pill.active {
+  background: #0284c7;
   border-color: #38bdf8;
   color: #ffffff;
-  box-shadow: 0 4px 16px -2px rgba(14, 165, 233, 0.5);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
 }
 
+.showroom-sort-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.showroom-sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #0d1527;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  padding: 0.46rem 2.2rem 0.46rem 1.15rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.showroom-sort-select:hover,
+.showroom-sort-select:focus {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.showroom-sort-select option {
+  background: #0b1325;
+  color: #ffffff;
+}
+
+.sort-chevron {
+  position: absolute;
+  right: 0.85rem;
+  width: 15px;
+  height: 15px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+/* ── Fleet Grid ─────────────────────────────── */
 .fleet-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 1.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .fleet-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .fleet-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .fleet-grid {
+    grid-template-columns: 1fr;
+  }
+  .showroom-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ── Showroom Card ──────────────────────────── */
+.showroom-card {
+  background: #070e1b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.65);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.showroom-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* ── Card Banner ────────────────────────────── */
+.card-banner {
+  height: 220px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-top-left-radius: 17px;
+  border-top-right-radius: 17px;
+  overflow: hidden;
+  background-color: #070e1b;
+}
+
+.card-stock-tag {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 3;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.26rem 0.7rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stock-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.card-graphic-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-custom-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.showroom-card:hover .card-custom-img {
+  transform: scale(1.08);
+}
+
+.bike-wireframe-svg {
+  width: 84%;
+  max-height: 130px;
+  color: #ffffff;
+  padding: 1rem;
+  transition: transform 0.4s ease;
+}
+
+.showroom-card:hover .bike-wireframe-svg {
+  transform: scale(1.05);
+}
+
+/* ── Card Body ──────────────────────────────── */
+.card-body {
+  padding: 1.25rem 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.card-titles {
+  margin-bottom: 1.1rem;
+}
+
+.bike-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.2rem 0;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bike-brand {
+  font-size: 0.86rem;
+  color: #798ea8;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ── 2x2 Specs Grid ─────────────────────────── */
+.card-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 0.95rem;
+  column-gap: 1rem;
+  margin-bottom: 1.35rem;
+}
+
+.spec-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.spec-lbl {
+  font-size: 0.76rem;
+  color: #758aa5;
+  font-weight: 500;
+  margin-bottom: 0.18rem;
+}
+
+.spec-val {
+  font-size: 0.9rem;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.color-val {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-transform: capitalize;
+}
+
+.color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Card Bottom: Price & Button ────────────── */
+.card-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  gap: 0.75rem;
+}
+
+.card-price-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-title {
+  font-size: 0.74rem;
+  color: #758aa5;
+  font-weight: 500;
+  margin-bottom: 0.15rem;
+}
+
+.price-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.btn-view-details {
+  background: #38bdf8;
+  color: #050d1a;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.6rem 1.15rem;
+  border-radius: 9px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+  white-space: nowrap;
+}
+
+.btn-view-details:hover {
+  background: #7dd3fc;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(56, 189, 248, 0.4);
+}
+
+/* ── Showroom See More Row ───────────────────── */
+.showroom-see-more-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.25rem;
+}
+
+.btn-see-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.35);
+  transition: all 0.25s ease;
+}
+
+.btn-see-more:hover {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(37, 99, 235, 0.5);
+}
+
+.see-more-icon {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s ease;
+}
+
+.btn-see-more:hover .see-more-icon {
+  transform: translateX(4px);
 }
 
 /* ── Products API States ────────────────────── */
-.products-loading {
+.products-loading,
+.products-error,
+.products-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1025,6 +1690,7 @@ const fetchProducts = async () => {
   padding: 5rem 1rem;
   color: #94a3b8;
   font-size: 1rem;
+  text-align: center;
 }
 
 .loading-spinner {
@@ -1037,18 +1703,6 @@ const fetchProducts = async () => {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
-
-.products-error,
-.products-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 5rem 1rem;
-  text-align: center;
-  color: #94a3b8;
-}
 
 .products-error span,
 .products-empty span {
@@ -1074,189 +1728,6 @@ const fetchProducts = async () => {
 
 .retry-btn:hover {
   background: rgba(14, 165, 233, 0.3);
-}
-
-.bike-card {
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.bike-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(56, 189, 248, 0.4);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 20px rgba(14, 165, 233, 0.15);
-}
-
-.bike-card-image-wrap {
-  position: relative;
-  height: 220px;
-  overflow: hidden;
-  background: #000000;
-}
-
-.bike-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  transition: transform 0.6s ease;
-}
-
-.bike-card:hover .bike-img {
-  transform: scale(1.08);
-}
-
-.bike-category-badge {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  background: rgba(7, 10, 18, 0.75);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #38bdf8;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.25rem 0.65rem;
-  border-radius: 6px;
-}
-
-.bike-overlay-spec {
-  position: absolute;
-  bottom: 0.85rem;
-  right: 0.85rem;
-  background: rgba(14, 165, 233, 0.85);
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 0.8rem;
-  padding: 0.25rem 0.65rem;
-  border-radius: 6px;
-  backdrop-filter: blur(4px);
-}
-
-.bike-card-body {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.bike-header {
-  margin-bottom: 1.1rem;
-}
-
-.bike-brand {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.bike-name {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #f8fafc;
-  margin-top: 0.15rem;
-}
-
-.bike-specs-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.6rem 1rem;
-  background: rgba(11, 15, 25, 0.6);
-  padding: 0.85rem 1rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  margin-bottom: 1.25rem;
-}
-
-.bike-spec-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.78rem;
-}
-
-.spec-k { color: #64748b; }
-.spec-v { color: #cbd5e1; font-weight: 600; }
-.spec-v.highlight { color: #38bdf8; font-weight: 700; }
-
-.color-spec-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  text-transform: capitalize;
-}
-
-.color-dot-sm {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-}
-
-.bike-card-footer {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 1rem;
-}
-
-.bike-price {
-  display: flex;
-  flex-direction: column;
-}
-
-.price-label {
-  font-size: 0.68rem;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.price-val {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #38bdf8;
-}
-
-.card-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  color: #ffffff;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.card-action-btn svg {
-  width: 0.9rem;
-  height: 0.9rem;
-  transition: transform 0.2s;
-}
-
-.card-action-btn:hover {
-  background: #0ea5e9;
-  border-color: #38bdf8;
-}
-
-.card-action-btn:hover svg {
-  transform: translateX(3px);
 }
 
 /* ════════════════════════════════════════════════════════

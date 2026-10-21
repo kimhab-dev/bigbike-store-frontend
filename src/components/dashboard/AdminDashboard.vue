@@ -101,8 +101,16 @@
         <div v-if="activeTab === 'products'" class="tab-pane-view">
           <div class="section-heading">
             <div>
-              <h2 class="section-title">Superbike inventory</h2>
-              <p class="section-subtitle">Manage bikes, stock, prices and photos in one place.</p>
+              <h2 class="section-title"><i class="fa fa-motorcycle"></i> Superbike Inventory</h2>
+              <p class="section-subtitle">Manage bikes, stock, prices, specs and photos in one place (POST /products &amp; POST /products/:id/image).</p>
+            </div>
+            <div class="heading-btn-group">
+              <BaseButton variant="secondary" size="md" icon="fa fa-refresh" :loading="isRefreshing" @click="refreshProducts">
+                Refresh
+              </BaseButton>
+              <BaseButton variant="primary" size="md" icon="fa fa-plus" @click="openCreateProductModal">
+                + Create New Product
+              </BaseButton>
             </div>
           </div>
 
@@ -153,7 +161,6 @@
                   <button class="stock-pill" :class="{ active: productStockFilter === 'low' }" @click="productStockFilter = 'low'">Low</button>
                   <button class="stock-pill out" :class="{ active: productStockFilter === 'out' }" @click="productStockFilter = 'out'">Out</button>
                 </div>
-
                 <span class="module-counter">{{ filteredProducts.length }} product{{ filteredProducts.length !== 1 ? 's' : '' }}</span>
               </div>
             </div>
@@ -175,7 +182,7 @@
                   <tr v-for="bike in filteredProducts" :key="bike.id || bike._id">
                     <td>
                       <div class="product-cell">
-                        <div class="bike-avatar-circle" :style="{ background: !bike.image ? getAvatarColor(bike.name) : '#152238' }">
+                        <div class="bike-avatar-circle" :style="{ background: !bike.image ? getAvatarColor(bike.name) : '#152238' }" @click="openQuickPhotoModal(bike)" title="Click to upload/change photo">
                           <img
                             v-if="bike.image"
                             :src="productImageUrl(bike.image)"
@@ -227,6 +234,9 @@
                     </td>
                     <td class="text-right">
                       <div class="action-buttons">
+                        <BaseButton variant="secondary" size="sm" icon="fa fa-camera" @click="openQuickPhotoModal(bike)" title="Upload Photo (POST /products/:id/image)">
+                          Photo
+                        </BaseButton>
                         <BaseButton variant="secondary" size="sm" @click="openEditProductModal(bike)" title="Edit product">
                           Edit
                         </BaseButton>
@@ -565,9 +575,45 @@
     <!-- ── 3. MODALS ────────────────────────────────────────────── -->
     <!-- Product Create & Edit Modal (POST /products & PATCH /products/:id) -->
     <BaseModal v-model="showProductModal"
-      :title="editingProduct ? `Edit Product #${editingProduct.id || editingProduct._id}` : 'Create New Product'"
-      :subtitle="editingProduct ? 'PATCH /products/:productId' : 'POST /products'" size="lg">
+      :title="editingProduct ? `Edit Product #${editingProduct.id || editingProduct._id}` : 'Create New Superbike'"
+      :subtitle="editingProduct ? 'PATCH /products/:productId' : 'POST /products (Data) & POST /products/:id/image (Photo)'" size="lg">
       <form @submit.prevent="saveProduct" class="modal-form">
+        <!-- 2-Step Automated Publishing Concept Stepper -->
+        <div class="product-concept-stepper">
+          <div class="stepper-step active">
+            <span class="stepper-num">1</span>
+            <div class="stepper-meta">
+              <strong class="stepper-title">Product Specifications</strong>
+              <small class="stepper-code">POST /products</small>
+            </div>
+          </div>
+          <div class="stepper-arrow"><i class="fa fa-arrow-right"></i></div>
+          <div class="stepper-step" :class="{ active: selectedProductFile || editingProduct?.image }">
+            <span class="stepper-num">2</span>
+            <div class="stepper-meta">
+              <strong class="stepper-title">Upload Image Asset</strong>
+              <small class="stepper-code">POST /products/:id/image (form-data)</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Demo Template Buttons (When Creating) -->
+        <div v-if="!editingProduct" class="preset-templates-bar">
+          <span class="preset-templates-label"><i class="fa fa-bolt"></i> Sample Presets:</span>
+          <div class="preset-template-buttons">
+            <button
+              v-for="tpl in sampleBikeTemplates"
+              :key="tpl.name"
+              type="button"
+              class="tpl-pill-btn"
+              :class="{ active: productForm.name === tpl.name }"
+              @click="applyBikeTemplate(tpl)"
+            >
+              {{ tpl.name }}
+            </button>
+          </div>
+        </div>
+
         <!-- Row 1: Name and Category -->
         <div class="form-row">
           <div class="form-field">
@@ -646,26 +692,147 @@
           <input v-model="productForm.description" type="text" placeholder="e.g. Bigbike" required />
         </div>
 
-        <!-- Product Image File Upload with Live Preview -->
+        <!-- Product Image File Upload with Live Dropzone & Preview -->
         <div class="form-field full-width">
-          <label>Product Image (POST /products/:productId/image)</label>
-          <input type="file" accept="image/*" @change="onProductFileSelected" class="file-picker" />
-          <div v-if="productPreviewUrl" class="product-preview-box">
-            <img :src="productPreviewUrl" alt="Product image preview" class="product-img-preview" />
-            <span class="preview-filename">{{ selectedProductFile?.name }}</span>
+          <div class="field-label-row">
+            <label>Product Image</label>
+            <span class="field-helper-badge">POST /products/:productId/image (multipart/form-data)</span>
           </div>
-          <div v-else-if="editingProduct?.image" class="product-preview-box">
-            <img :src="productImageUrl(editingProduct.image)" alt="Current product photo" class="product-img-preview" />
-            <span class="preview-filename">Current photo: {{ editingProduct.image }}</span>
+
+          <div
+            class="image-upload-dropzone"
+            :class="{ 'has-file': productPreviewUrl || editingProduct?.image }"
+            @click="$refs.productFileInput.click()"
+            @dragover.prevent
+            @drop.prevent="onProductFileDrop"
+          >
+            <input
+              ref="productFileInput"
+              type="file"
+              accept="image/*"
+              class="hidden-file-input"
+              @change="onProductFileSelected"
+            />
+
+            <!-- Preview if file selected -->
+            <div v-if="productPreviewUrl" class="upload-preview-active">
+              <img :src="productPreviewUrl" alt="Product preview" class="preview-hero-img" />
+              <div class="preview-details">
+                <span class="preview-badge new-badge"><i class="fa fa-check"></i> Ready to Upload</span>
+                <strong class="preview-file-title">{{ selectedProductFile?.name }}</strong>
+                <span class="preview-file-size">{{ (selectedProductFile?.size / 1024).toFixed(1) }} KB</span>
+                <span class="preview-hint">Click or drop to choose a different photo</span>
+              </div>
+              <button type="button" class="clear-file-btn" @click.stop="clearProductFile" title="Remove image">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+
+            <!-- Current photo if editing without new file -->
+            <div v-else-if="editingProduct?.image" class="upload-preview-active">
+              <img :src="productImageUrl(editingProduct.image)" alt="Current photo" class="preview-hero-img" />
+              <div class="preview-details">
+                <span class="preview-badge current-badge">Current Photo</span>
+                <strong class="preview-file-title">{{ editingProduct.image }}</strong>
+                <span class="preview-hint">Click or drop to upload a new replacement photo</span>
+              </div>
+            </div>
+
+            <!-- Empty dropzone state -->
+            <div v-else class="upload-empty-content">
+              <div class="upload-icon-circle">
+                <i class="fa fa-camera"></i>
+              </div>
+              <div class="upload-text-wrap">
+                <span class="upload-primary-text">Click to choose or drag &amp; drop bike photo</span>
+                <span class="upload-secondary-text">PNG, JPG, WEBP up to 10MB • Uploaded via form-data</span>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <!-- Progress step banner during save -->
+        <div v-if="isSavingProduct && saveProductStepText" class="saving-progress-banner">
+          <i class="fa fa-spinner spin-anim"></i>
+          <span>{{ saveProductStepText }}</span>
         </div>
 
         <div class="modal-form-actions">
           <BaseButton variant="secondary" size="md" type="button" @click="showProductModal = false" :disabled="isSavingProduct">
             Cancel
           </BaseButton>
-          <BaseButton variant="primary" size="md" type="submit" :loading="isSavingProduct" :loadingText="'Saving...'">
+          <BaseButton variant="primary" size="md" type="submit" :loading="isSavingProduct" :loadingText="saveProductStepText || 'Saving...'">
             {{ editingProduct ? 'Save Changes (PATCH)' : 'Create Product (POST)' }}
+          </BaseButton>
+        </div>
+      </form>
+    </BaseModal>
+
+    <!-- Quick Photo Upload Modal (POST /products/:productId/image) -->
+    <BaseModal v-model="showPhotoModal"
+      :title="`Upload Bike Photo: ${photoEditingBike?.name || 'Product'}`"
+      :subtitle="photoEditingBike ? `POST /products/${photoEditingBike.id || photoEditingBike._id}/image` : 'Upload image (form-data)'"
+      size="md">
+      <form @submit.prevent="saveQuickPhoto" class="modal-form">
+        <div class="form-field full-width">
+          <div
+            class="image-upload-dropzone"
+            :class="{ 'has-file': quickPhotoPreviewUrl || photoEditingBike?.image }"
+            @click="$refs.quickPhotoInput.click()"
+            @dragover.prevent
+            @drop.prevent="onQuickPhotoDrop"
+          >
+            <input
+              ref="quickPhotoInput"
+              type="file"
+              accept="image/*"
+              class="hidden-file-input"
+              @change="onQuickPhotoSelected"
+            />
+
+            <!-- Preview if file selected -->
+            <div v-if="quickPhotoPreviewUrl" class="upload-preview-active">
+              <img :src="quickPhotoPreviewUrl" alt="New photo preview" class="preview-hero-img" />
+              <div class="preview-details">
+                <span class="preview-badge new-badge"><i class="fa fa-check"></i> New Photo Selected</span>
+                <strong class="preview-file-title">{{ selectedQuickPhotoFile?.name }}</strong>
+                <span class="preview-file-size">{{ (selectedQuickPhotoFile?.size / 1024).toFixed(1) }} KB</span>
+                <span class="preview-hint">Click or drop to select a different image</span>
+              </div>
+              <button type="button" class="clear-file-btn" @click.stop="clearQuickPhoto" title="Remove selection">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+
+            <!-- Current photo if no new file selected -->
+            <div v-else-if="photoEditingBike?.image" class="upload-preview-active">
+              <img :src="productImageUrl(photoEditingBike.image)" alt="Current photo" class="preview-hero-img" />
+              <div class="preview-details">
+                <span class="preview-badge current-badge">Current Photo</span>
+                <strong class="preview-file-title">{{ photoEditingBike.image }}</strong>
+                <span class="preview-hint">Click to choose a new photo file</span>
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div v-else class="upload-empty-content">
+              <div class="upload-icon-circle">
+                <i class="fa fa-cloud-upload"></i>
+              </div>
+              <div class="upload-text-wrap">
+                <span class="upload-primary-text">Click or drop bike photo here</span>
+                <span class="upload-secondary-text">PNG, JPG, WEBP • Uploads via form-data</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-form-actions">
+          <BaseButton variant="secondary" size="md" type="button" @click="showPhotoModal = false" :disabled="isUploadingQuickPhoto">
+            Cancel
+          </BaseButton>
+          <BaseButton variant="primary" size="md" type="submit" :loading="isUploadingQuickPhoto" :disabled="!selectedQuickPhotoFile" :loadingText="'Uploading Photo...'">
+            Upload Photo (POST)
           </BaseButton>
         </div>
       </form>
@@ -836,11 +1003,19 @@ const handleDeleteCategory = async (categoryId, categoryName) => {
 const productSearchQuery = ref('');
 const showProductModal = ref(false);
 const showStockModal = ref(false);
+const showPhotoModal = ref(false);
 const editingProduct = ref(null);
 const stockEditingBike = ref(null);
+const photoEditingBike = ref(null);
 const quickStockValue = ref(10);
 const selectedProductFile = ref(null);
 const productPreviewUrl = ref(null);
+const selectedQuickPhotoFile = ref(null);
+const quickPhotoPreviewUrl = ref(null);
+const isUploadingQuickPhoto = ref(false);
+const saveProductStepText = ref('');
+const productFileInput = ref(null);
+const quickPhotoInput = ref(null);
 
 const productForm = reactive({
   name: 'Yamaha R1M',
@@ -852,6 +1027,58 @@ const productForm = reactive({
   engince: 999,
   color: 'white',
 });
+
+const sampleBikeTemplates = [
+  {
+    name: 'Yamaha R1M',
+    price: 10000,
+    description: 'Bigbike',
+    stock: 10,
+    year: 2026,
+    engince: 999,
+    color: 'white',
+  },
+  {
+    name: 'Ducati Panigale V4 S',
+    price: 29500,
+    description: 'High-performance Italian superbike with Desmosedici Stradale V4',
+    stock: 6,
+    year: 2026,
+    engince: 1103,
+    color: 'red',
+  },
+  {
+    name: 'BMW S1000RR M-Package',
+    price: 24500,
+    description: 'German hypersport powerhouse with ShiftCam technology',
+    stock: 8,
+    year: 2026,
+    engince: 999,
+    color: 'silver',
+  },
+  {
+    name: 'Kawasaki Ninja H2 Carbon',
+    price: 34000,
+    description: 'Supercharged hypersport monster with carbon fiber fairings',
+    stock: 4,
+    year: 2026,
+    engince: 998,
+    color: 'black',
+  },
+];
+
+const applyBikeTemplate = (tpl) => {
+  productForm.name = tpl.name;
+  productForm.price = tpl.price;
+  productForm.description = tpl.description;
+  productForm.stock = tpl.stock;
+  productForm.year = tpl.year;
+  productForm.engince = tpl.engince;
+  productForm.color = tpl.color;
+  if (categories.value.length > 0 && !productForm.category_id) {
+    productForm.category_id = Number(categories.value[0].id);
+  }
+};
 
 const colorPresets = [
   { label: 'White', value: 'white', hex: '#f8fafc' },
@@ -870,20 +1097,39 @@ const getValidColor = (color) => {
 // Products Data List
 const products = ref([]);
 
-// Fetch Products from GET /products/my
+// Fetch Products from GET /products/my with fallback to GET /products
 const fetchProducts = async () => {
   try {
-    const res = await productService.getMyProducts();
-    const list = res?.data || res;
+    let res = null;
+    try {
+      res = await productService.getMyProducts();
+    } catch (e) {
+      res = await productService.getAllProducts();
+    }
+    let list = res?.data || res;
     if (Array.isArray(list)) {
       products.value = list;
     } else if (list && Array.isArray(list.data)) {
       products.value = list.data;
     } else {
-      products.value = [];
+      res = await productService.getAllProducts();
+      list = res?.data || res;
+      products.value = Array.isArray(list) ? list : (list?.data || []);
     }
   } catch (err) {
     products.value = [];
+  }
+};
+
+const refreshProducts = async () => {
+  isRefreshing.value = true;
+  try {
+    await Promise.all([fetchProducts(), fetchCategories()]);
+    toast.success('Inventory synced with server.', 'Inventory Refreshed');
+  } catch (err) {
+    //
+  } finally {
+    isRefreshing.value = false;
   }
 };
 
@@ -895,18 +1141,33 @@ const onProductFileSelected = (e) => {
   productPreviewUrl.value = URL.createObjectURL(file);
 };
 
+const onProductFileDrop = (e) => {
+  const files = e.dataTransfer?.files;
+  if (!files || files.length === 0) return;
+  const file = files[0];
+  selectedProductFile.value = file;
+  productPreviewUrl.value = URL.createObjectURL(file);
+};
+
+const clearProductFile = () => {
+  selectedProductFile.value = null;
+  productPreviewUrl.value = null;
+  if (productFileInput.value) productFileInput.value.value = '';
+};
+
 const openCreateProductModal = () => {
   editingProduct.value = null;
   productForm.name = 'Yamaha R1M';
   productForm.price = 10000;
   productForm.description = 'Bigbike';
-  productForm.category_id = 1;
+  productForm.category_id = categories.value.length > 0 ? Number(categories.value[0].id) : 1;
   productForm.stock = 10;
   productForm.year = 2026;
   productForm.engince = 999;
   productForm.color = 'white';
   selectedProductFile.value = null;
   productPreviewUrl.value = null;
+  saveProductStepText.value = '';
   showProductModal.value = true;
 };
 
@@ -915,13 +1176,14 @@ const openEditProductModal = (bike) => {
   productForm.name = bike.name || '';
   productForm.price = bike.price ?? 10000;
   productForm.description = bike.description || 'Bigbike';
-  productForm.category_id = bike.category_id ?? bike.categoryId ?? 1;
+  productForm.category_id = Number(bike.category_id ?? bike.categoryId ?? 1);
   productForm.stock = bike.stock ?? 10;
   productForm.year = bike.year ?? 2026;
   productForm.engince = bike.engince ?? bike.engine ?? 999;
   productForm.color = bike.color || 'white';
   selectedProductFile.value = null;
   productPreviewUrl.value = null;
+  saveProductStepText.value = '';
   showProductModal.value = true;
 };
 
@@ -931,54 +1193,124 @@ const openStockModal = (bike) => {
   showStockModal.value = true;
 };
 
+const openQuickPhotoModal = (bike) => {
+  photoEditingBike.value = bike;
+  selectedQuickPhotoFile.value = null;
+  quickPhotoPreviewUrl.value = null;
+  showPhotoModal.value = true;
+};
+
+const onQuickPhotoSelected = (e) => {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+  const file = files[0];
+  selectedQuickPhotoFile.value = file;
+  quickPhotoPreviewUrl.value = URL.createObjectURL(file);
+};
+
+const onQuickPhotoDrop = (e) => {
+  const files = e.dataTransfer?.files;
+  if (!files || files.length === 0) return;
+  const file = files[0];
+  selectedQuickPhotoFile.value = file;
+  quickPhotoPreviewUrl.value = URL.createObjectURL(file);
+};
+
+const clearQuickPhoto = () => {
+  selectedQuickPhotoFile.value = null;
+  quickPhotoPreviewUrl.value = null;
+  if (quickPhotoInput.value) quickPhotoInput.value.value = '';
+};
+
+const saveQuickPhoto = async () => {
+  if (!photoEditingBike.value || !selectedQuickPhotoFile.value) {
+    toast.warning('Please select an image file to upload.', 'No Image Selected');
+    return;
+  }
+  const bikeId = photoEditingBike.value.id || photoEditingBike.value._id;
+  isUploadingQuickPhoto.value = true;
+  try {
+    await productService.uploadProductImage(bikeId, selectedQuickPhotoFile.value);
+    toast.success(`Photo uploaded for ${photoEditingBike.value.name} (POST /products/${bikeId}/image)`, 'Photo Uploaded');
+    showPhotoModal.value = false;
+    await fetchProducts();
+  } catch (err) {
+    const errorMsg = err.response?.data?.message || err.message || 'Failed to upload photo';
+    toast.error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg, 'Upload Error');
+  } finally {
+    isUploadingQuickPhoto.value = false;
+  }
+};
+
 // Create or Update Product
 const saveProduct = async () => {
+  if (!productForm.name || !productForm.name.trim()) {
+    toast.warning('Product name is required.', 'Missing Field');
+    return;
+  }
+  if (!productForm.price || Number(productForm.price) <= 0) {
+    toast.warning('Valid product price is required.', 'Invalid Price');
+    return;
+  }
+  if (!productForm.category_id) {
+    productForm.category_id = categories.value.length > 0 ? Number(categories.value[0].id) : 1;
+  }
+
   isSavingProduct.value = true;
+  saveProductStepText.value = editingProduct.value
+    ? 'Saving updates (PATCH /products/:id)...'
+    : 'Step 1/2: Submitting product specs (POST /products)...';
+
   try {
     const payload = {
-      name: productForm.name,
+      name: productForm.name.trim(),
       price: Number(productForm.price),
-      description: productForm.description,
+      description: productForm.description ? productForm.description.trim() : 'Bigbike',
       category_id: Number(productForm.category_id),
-      stock: Number(productForm.stock),
-      year: Number(productForm.year),
-      engince: Number(productForm.engince),
-      color: productForm.color,
+      stock: Number(productForm.stock ?? 0),
+      year: Number(productForm.year || 2026),
+      engince: Number(productForm.engince || 999),
+      color: productForm.color ? productForm.color.trim() : 'white',
     };
 
-    let savedBike = null;
+    let targetId = null;
 
     if (editingProduct.value) {
       const bikeId = editingProduct.value.id || editingProduct.value._id;
       const res = await productService.updateProduct(bikeId, payload);
-      savedBike = res?.data || res;
-      toast.success(`Product #${bikeId} updated (PATCH /products/:id)`, 'Product Updated');
+      const unwrapped = unwrapResponseData(res);
+      targetId = unwrapped?.id || unwrapped?._id || bikeId;
+      toast.success(`Product #${targetId} updated (PATCH /products/${targetId})`, 'Product Updated');
     } else {
       const res = await productService.createProduct(payload);
-      savedBike = res?.data || res;
-      toast.success('New product created (POST /products)', 'Product Created');
+      const unwrapped = unwrapResponseData(res);
+      targetId = unwrapped?.id || unwrapped?._id || unwrapped?.productId || res?.id || res?._id || res?.data?.id || res?.data?._id;
+      toast.success(`Product "${payload.name}" created (POST /products)`, 'Product Created');
     }
 
-    // Handle Image Upload if selected
-    if (selectedProductFile.value && savedBike) {
-      const targetId = savedBike.id || savedBike._id || editingProduct.value?.id || editingProduct.value?._id;
-      if (targetId) {
-        try {
-          await productService.uploadProductImage(targetId, selectedProductFile.value);
-          toast.success('Product image uploaded successfully.', 'Image Uploaded');
-        } catch (imgErr) {
-          toast.warning('Product saved, but image upload failed.', 'Image Notice');
-        }
+    // Step 2: Upload product image via POST /products/:productId/image (multipart/form-data)
+    if (selectedProductFile.value && targetId) {
+      saveProductStepText.value = `Step 2/2: Uploading product image (POST /products/${targetId}/image)...`;
+      try {
+        await productService.uploadProductImage(targetId, selectedProductFile.value);
+        toast.success(`Photo uploaded for product #${targetId}!`, 'Image Uploaded');
+      } catch (imgErr) {
+        console.error('Image upload failed:', imgErr);
+        const imgMsg = imgErr.response?.data?.message || imgErr.message || 'Image upload failed';
+        toast.warning(`Product was saved, but photo upload failed: ${imgMsg}`, 'Photo Notice');
       }
     }
 
     showProductModal.value = false;
+    selectedProductFile.value = null;
+    productPreviewUrl.value = null;
     await fetchProducts();
   } catch (err) {
     const errorMsg = err.response?.data?.message || err.message || 'Failed to save product';
     toast.error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg, 'Save Error');
   } finally {
     isSavingProduct.value = false;
+    saveProductStepText.value = '';
   }
 };
 
@@ -2741,33 +3073,324 @@ onMounted(async () => {
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.file-picker {
-  padding: 0.5rem 0;
-  color: #94a3b8;
+/* ── Product Concept Stepper & Presets ───────────────── */
+.product-concept-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+  padding: 0.75rem 1.15rem;
+  margin-bottom: 0.25rem;
+}
+
+.stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.stepper-step.active {
+  opacity: 1;
+}
+
+.stepper-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stepper-step.active .stepper-num {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+.stepper-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.stepper-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.stepper-code {
+  font-size: 0.68rem;
+  font-family: monospace;
+  color: #38bdf8;
+}
+
+.stepper-arrow {
+  color: #475569;
   font-size: 0.85rem;
 }
 
-.product-preview-box {
+/* Preset Templates Bar */
+.preset-templates-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem;
-  background: rgba(30, 41, 59, 0.5);
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.75rem;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px dashed rgba(71, 85, 105, 0.4);
   border-radius: 10px;
-  border: 1px dashed rgba(56, 189, 248, 0.4);
 }
 
-.product-img-preview {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 8px;
+.preset-templates-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fbbf24;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-.preview-filename {
-  font-size: 0.82rem;
+.preset-template-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.tpl-pill-btn {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  color: #cbd5e1;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tpl-pill-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
   color: #38bdf8;
+}
+
+.tpl-pill-btn.active {
+  background: #0284c7;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+/* Field Label Helper Row */
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.field-helper-badge {
+  font-size: 0.68rem;
   font-family: monospace;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+/* Modern Image Upload Dropzone */
+.image-upload-dropzone {
+  position: relative;
+  border: 2px dashed rgba(71, 85, 105, 0.6);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-upload-dropzone:hover {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.05);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.1);
+}
+
+.image-upload-dropzone.has-file {
+  border-style: solid;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.upload-empty-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.upload-icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.upload-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.upload-primary-text {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.upload-secondary-text {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+/* Upload Preview */
+.upload-preview-active {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.preview-hero-img {
+  width: 76px;
+  height: 76px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: #0b0f19;
+  flex-shrink: 0;
+}
+
+.preview-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.preview-badge.new-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.preview-badge.current-badge {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.preview-file-title {
+  font-size: 0.85rem;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-file-size {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.preview-hint {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.clear-file-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: #fb7185;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.clear-file-btn:hover {
+  background: rgba(244, 63, 94, 0.25);
+  color: #ffffff;
+  border-color: #fb7185;
+}
+
+.saving-progress-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  color: #38bdf8;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.bike-avatar-circle {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bike-avatar-circle:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
 }
 
 .modal-form-actions {

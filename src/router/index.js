@@ -9,6 +9,7 @@ import DashboardView from '@/views/DashboardView.vue';
 import ProfileView from '@/views/ProfileView.vue';
 import ProductDetailView from '@/views/ProductDetailView.vue';
 import MyOrdersView from '@/views/MyOrdersView.vue';
+import ShowroomView from '@/views/ShowroomView.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 
@@ -84,6 +85,11 @@ const routes = [
     name: 'my-orders',
     component: MyOrdersView,
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/showroom',
+    name: 'showroom',
+    component: ShowroomView,
   },
   {
     path: '/:pathMatch(.*)*',

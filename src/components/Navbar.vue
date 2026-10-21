@@ -12,7 +12,7 @@
           <i class="bi bi-house-door"></i>
           <span>Home</span>
         </router-link>
-        <a href="/#featured-fleet">
+        <a href="/showroom">
           <i class="fa fa-motorcycle"></i>
           <span>Showroom</span>
         </a>

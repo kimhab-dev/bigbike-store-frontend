@@ -2,10 +2,6 @@
   <div class="auth-card">
     <!-- Header -->
     <div class="auth-header">
-      <div class="brand-pill register-pill">
-        <span class="pulse-dot green"></span>
-        <span>NEW REGISTRATION</span>
-      </div>
       <h2 class="form-title">Join BigBike Store</h2>
       <p class="form-subtitle">Create your rider account &amp; unlock the garage</p>
     </div>

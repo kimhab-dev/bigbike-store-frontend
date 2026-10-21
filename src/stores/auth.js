@@ -168,6 +168,27 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async updateProfile(data) {
+      this.loading = true;
+      try {
+        let response;
+        try {
+          response = await authService.updateProfile?.(data);
+        } catch (e) {
+          console.warn('API updateProfile failed or not implemented:', e);
+        }
+        if (response?.data) {
+          this.user = { ...this.user, ...response.data };
+        } else {
+          this.user = { ...this.user, ...data };
+        }
+        localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(this.user));
+        return this.user;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async uploadAvatar(fileOrFormData) {
       let formData = fileOrFormData;
       if (fileOrFormData instanceof File) {

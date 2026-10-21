@@ -29,11 +29,7 @@ export const productService = {
       formData = new FormData();
       formData.append(fieldName, fileOrFormData);
     }
-    return api.post(API_ENDPOINTS.PRODUCTS.IMAGE(productId), formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    return api.post(API_ENDPOINTS.PRODUCTS.IMAGE(productId), formData);
   },
 
   // PATCH /products/:productId (Update product: { name, price, description, category_id, stock, year, engince, color })
@@ -45,6 +41,11 @@ export const productService = {
   updateProductStock(productId, stockValue) {
     const payload = typeof stockValue === 'object' ? stockValue : { stock: Number(stockValue) };
     return api.patch(API_ENDPOINTS.PRODUCTS.STOCK(productId), payload);
+  },
+
+  // Alias for updateProductStock
+  updateStock(productId, stockValue) {
+    return this.updateProductStock(productId, stockValue);
   },
 
   // DELETE /products/:productId (Delete product)
